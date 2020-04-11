@@ -7,7 +7,7 @@ Adder.v (FIN)
 PC 업데이트시 사용되는 단순 덧셈만 하는 모듈
 
 Alu.v (ING)
-Control_unit.v에서 출력되는 ALUOp 이라는 변수에 맞게 operation 수행.  FUNC_SUB 인 경우에서  하던데 한 번 확인 좀, 나머지는 끝
+Control_unit.v에서 출력되는 ALUOp 이라는 변수에 맞게 operation 수행.
 
 Control_unit.v (ING)
 TSC instruction field에 맞게 control signal 출력하게 만들고 있는 중, R-type, I-type, J-type 맞게 계속 추가 중
