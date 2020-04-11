@@ -1,16 +1,16 @@
 
 module register_file (
 	intput [2:0] read_register_1, read_register_2,
-	input [31:0] write_data,
+	input [`WORD_SIZE-1:0] write_data,
 	input [2:0] write_register,
 	input signal_RegWrite,
 	input clk,
 	input reset_n,
 
-	output reg [31:0] read_data_1, read_data_2,
+	output reg [`WORD_SIZE-1:0] read_data_1, read_data_2,
 );
 
-	reg [`WORD_SIZE-1:0] Registers [0:3]
+	reg [`WORD_SIZE-1:0] Registers [`NUM_REGS - 1:0]
 
 	assign read_data_1 = Registers[read_register_1];
 	assign read_data_2 = Registers[read_register_2];
@@ -25,3 +25,6 @@ module register_file (
     end
 
 endmodule
+
+
+//FIN

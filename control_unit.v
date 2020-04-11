@@ -1,16 +1,20 @@
+/*
+    Main Control
+*/
+
 module control_unit (
     opcode,
     func
 );
-    input [4:0] opcode;
-    input [6:0] func;
+    input [3:0] opcode;
+    input [5:0] func;
 
     output RegDst
     output Jump
     output Branch
     output MemRead
     output MemtoReg
-    output [4:0] ALUOp // ???
+    output [2:0] ALUOp // 8 ALU Function Codes
     output MemWrite
     output ALUSrc
     output Regwrite
@@ -28,50 +32,50 @@ module control_unit (
         RegWrite = 0;
 
         case (opcode)
-        4'b1111 : begin // R-format
+        ALU_OP : begin // R-format
             RegDst = 1;
             RegRead = 1;
 
             case (func)
-            6'b000000 : begin // ADD
-                ALUOp = 4'b0001;
+            INST_FUNC_ADD : begin // ADD
+                ALUOp = FUNC_ADD;
                 RegWrite = 1;
             end
-            6'b000001 : begin // SUB
-                ALUOp = 4'b0010;
+            INST_FUNC_SUB : begin // SUB
+                ALUOp = FUNC_SUB;
                 RegWrite = 1;
             end
-            6'b000010 : begin // AND
-                ALUOp = 4'b0011;
+            INST_FUNC_AND : begin // AND
+                ALUOp = FUNC_AND;
                 RegWrite = 1;
             end
-            6'b000011 : begin // ORR
-                ALUOp = 4'b0100;
+            INST_FUNC_ORR : begin // ORR
+                ALUOp = FUNC_ORR;
                 RegWrite = 1;
             end
-            6'b000100 : begin // NOT
-                ALUOp = 4'b0101;
+            INST_FUNC_NOT : begin // NOT
+                ALUOp = FUNC_NOT;
                 RegWrite = 1;
             end
-            6'b000101 : begin // TCP (Two's Complement)
-                ALUOp = 4'b0110;
+            INST_FUNC_TCP : begin // TCP (Two's Complement)
+                ALUOp = FUNC_TCP;
                 RegWrite = 1;
             end
-            6'b000110 : begin // SHL (Shift Left)
-                ALUOp = 4'b0111;
+            INST_FUNC_SHL : begin // SHL (Shift Left)
+                ALUOp = FUNC_SHL;
                 RegWrite = 1;
             end
-            6'b000111 : begin // SHR (Shift Right)
-                ALUOp = 4'b1000;
+            INST_FUNC_SHR : begin // SHR (Shift Right)
+                ALUOp = FUNC_SHR;
                 RegWrite = 1;
             end
             6'b011011 : begin // RWD ---> not fin
             end
             6'b011100 : begin // WWD ---> not fin
             end
-            6'b011001 : begin // JPR ---> not fin
+            INST_FUNC_JPR : begin // JPR ---> not fin
             end
-            6'b011010 : begin // JRL ---> not fin
+            INST_FUNC_JRL : begin // JRL ---> not fin
             end
             6'b011101 : begin // HLT ---> not fin
             end
@@ -82,38 +86,42 @@ module control_unit (
             endcase
         end
 
-        6'b000100 : begin // I-type ADI (ADD Imm)
+        ADI_OP : begin // I-type ADI (ADD Imm)
             ALUOp = 4'b0001;
             RegWrite = 1;
         end
-        6'b000101 : begin // I-type ORI (OR Imm)
+        ORI_OP : begin // I-type ORI (OR Imm)
             ALUOp = 4'b0100;
             RegWrite = 1;
         end
-        6'b000110 : begin // I-type LHI (Shift Left Imm)
+        LHI_OP : begin // I-type LHI (Shift Left Imm)
         end
-        6'b000111 : begin // I-type LWD (Load)
+        LWD_OP : begin // I-type LWD (Load)
         end
-        6'b001000 : begin // I-type SWD (Store)
-        end
-
-        6'b000000 : begin // I-type BNE
-            Branch = 1;
-        end
-        6'b000001 : begin // I-type BEQ
-            Branch = 1;
-        end
-        6'b000010 : begin // I-type BGZ
-            Branch = 1;
-        end
-        6'b000011 : begin // I-type BLZ
-            Branch = 1;
+        SWD_OP : begin // I-type SWD (Store)
         end
 
-        6'b001001 : begin // J-type JMP (Jump)
+        BNE_OP : begin // I-type BNE
+            ALUOp = FUNC_SUB;
+            Branch = 1;
+        end
+        BEQ_OP : begin // I-type BEQ
+            ALUOp = FUNC_SUB;
+            Branch = 1;
+        end
+        BGZ_OP : begin // I-type BGZ
+            ALUOp = FUNC_SUB;
+            Branch = 1;
+        end
+        BLZ_OP : begin // I-type BLZ
+            ALUOp = FUNC_SUB;
+            Branch = 1;
+        end
+
+        JMP_OP : begin // J-type JMP (Jump)
             Jump = 1;
         end
-        6'b001010 : begin // J-type JAL
+        JAL_OP : begin // J-type JAL
             Jump = 1;
         end
         endcase
