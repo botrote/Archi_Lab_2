@@ -26,7 +26,7 @@ module control_unit (
         Branch = 0;
         MemRead = 0;
         MemtoReg = 0;
-        ALUOp = 4'b0000;
+        ALUOp = 3'b000;
         MemWrite = 0;
         ALUSrc = 0;
         RegWrite = 0;
@@ -95,10 +95,16 @@ module control_unit (
             RegWrite = 1;
         end
         LHI_OP : begin // I-type LHI (Shift Left Imm)
+            RegWrite = 1;
         end
         LWD_OP : begin // I-type LWD (Load)
+            ALUOp = FUNC_ADD;
+            MemtoReg = 1;
+            RegWrite = 1;
         end
         SWD_OP : begin // I-type SWD (Store)
+            ALUOp = FUNC_ADD;
+            MemWrite = 1;
         end
 
         BNE_OP : begin // I-type BNE
