@@ -1,16 +1,17 @@
+`include "opcodes.v"
 
 module multiplexer (
 	input [`WORD_SIZE-1:0] input1,
 	input [`WORD_SIZE-1:0] input2,
 	input control_signal,
 
-	output [`WORD_SIZE-1:0] output
+	output [`WORD_SIZE-1:0] output1
 );
 
-	if(control_signal == 0)
-		assign output = input1;
-	else
-		assign output = input2;
+
+	assign output1 = ((control_signal == 0) ? input1 : input2);
+
+
 
 endmodule
 
