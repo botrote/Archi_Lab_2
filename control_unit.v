@@ -77,12 +77,6 @@ module control_unit (
             end
             INST_FUNC_JRL : begin // JRL ---> not fin
             end
-            6'b011101 : begin // HLT ---> not fin
-            end
-            6'b011110 : begin // ENI ---> not fin
-            end
-            6'b011111 : begin // DSI ---> not fin
-            end
             endcase
         end
 
