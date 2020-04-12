@@ -1,10 +1,13 @@
-module pc (
-    input [`WORD_SIZE - 1:0] new_PC,
-    input reset_n,
-    int clk,
+`include "opcodes.v"
 
-    output [`WORD_SIZE - 1:0] cur_PC
-);
+module pc (clk, reset_n, new_PC, cur_PC);
+
+    input [`WORD_SIZE - 1:0] new_PC;
+    input reset_n;
+    input clk;
+
+    output [`WORD_SIZE - 1:0] cur_PC;
+
 
     reg [`WORD_SIZE - 1:0] cur_PC;
 
