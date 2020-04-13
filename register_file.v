@@ -13,6 +13,13 @@ module register_file (
 
 	reg [`WORD_SIZE-1:0] Registers [`NUM_REGS - 1:0];
 
+    integer j;
+    initial
+    begin
+    for(j = 0; j < 4; j++)
+        Registers[j] = 0;
+    end
+
 	assign read_data_1 = Registers[read_register_1];
 	assign read_data_2 = Registers[read_register_2];
 

@@ -10,5 +10,8 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
     input reset_n;
     input clk;
 
-    
+    always @ (posedge clk)
+    begin
+        if()
+    end
 endmodule

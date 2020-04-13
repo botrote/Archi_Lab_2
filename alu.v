@@ -1,13 +1,21 @@
 
 module alu (
-	input [2:0] ALUOp,
-	input [`WORD_SIZE-1:0] data_1,
-	input [`WORD_SIZE-1:0] data_2,
-	input [11:0] imm,
+	ALUOp,
+	data_1,
+	data_2,
+	imm,
 
-	output zero,
-	output [`WORD_SIZE-1:0] ALU_result
+	zero,
+	ALU_result
 );
+
+    input [2:0] ALUOp;
+    input [`WORD_SIZE-1:0] data_1;
+    input [`WORD_SIZE-1:0] data_2;
+    input [11:0] imm;
+
+    output zero;
+    output [`WORD_SIZE-1:0] ALU_result;
 
 	reg zero;
 	reg [`WORD_SIZE - 1:0] ALU_result;

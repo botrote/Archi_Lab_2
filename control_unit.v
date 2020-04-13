@@ -4,7 +4,17 @@
 
 module control_unit (
     opcode,
-    func
+    func,
+
+    RegDst,
+    Jump,
+    Branch,
+    MemRead,
+    MemtoReg,
+    ALUOp,
+    MemWrite,
+    ALUSrc,
+    RegWrite
 );
     input [3:0] opcode;
     input [5:0] func;
@@ -19,7 +29,7 @@ module control_unit (
     output ALUSrc
     output Regwrite
 
-    always @(*) begin
+    always @(opcode, func) begin
 
         RegDst = 0;
         Jump = 0;
@@ -125,5 +135,5 @@ module control_unit (
             Jump = 1;
         end
         endcase
-    end    
+    end
 endmodule
