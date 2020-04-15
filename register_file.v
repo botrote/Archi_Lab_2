@@ -1,9 +1,9 @@
 `include "opcodes.v"
 
 module register_file (
-	input [2:0] read_register_1, read_register_2,
+	input [1:0] read_register_1, read_register_2,
 	input [`WORD_SIZE-1:0] write_data,
-	input [2:0] write_register,
+	input [1:0] write_register,
 	input signal_RegWrite,
 	input clk,
 	input reset_n,
