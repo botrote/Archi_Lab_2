@@ -16,7 +16,7 @@ module register_file (
     integer j;
     initial
     begin
-    for(j = 0; j < 4; j++)
+    for(j = 0; j < 4; j = j + 1)
         Registers[j] = 0;
     end
 
