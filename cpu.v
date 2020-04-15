@@ -30,7 +30,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
     wire zero;
     wire ALU_result;
 
-    reg['WORD_SIZE - 1:0] pc = 16'b0;
+    reg [`WORD_SIZE - 1:0] pc = 16'h0;
 
     assign opcode = data[15:12];
     assign rs = data[11:10];
@@ -48,10 +48,10 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 
     always @(posedge clk)
     begin
-        if(opcode == JMP_OP) begin
+        if(opcode == `JMP_OP) begin
             pc = target_address;
         end
-        else if(opcode == BNE_OP || opcode == BEQ_OP || opcode == BGZ_OP || opcode == BLZ_OP) begin
+        else if(opcode == `BNE_OP || opcode == `BEQ_OP || opcode == `BGZ_OP || opcode == `BLZ_OP) begin
             pc = pc + 1 + $signed(imm);
         end
         else begin
