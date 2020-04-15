@@ -89,6 +89,5 @@ module alu (
 				else
 					zero = 0;
 			end
-			endcase
-	end
+		end
 endmodule
