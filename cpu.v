@@ -19,7 +19,15 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
     wire [7:0] imm;
     wire [11:0] target;
 
+    wire [`WORD_SIZE - 1:0] extended_imm;
+
     wire RegDst, Jump, Branch, MemRead, MemtoReg, ALUOp, MemWrite, ALUSrc, RegWrite; // control signals
+
+    // MUX output
+    wire mux1_output;
+    wire mux2_output;
+    wire mux3_output;
+    wire mux4_output;
 
     // register input, output
     wire [`WORD_SIZE - 1:0] read_data_1, read_data_2;
@@ -40,22 +48,35 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
     assign imm = data[7:0];
     assign target_address = data[11:0];
 
+    pc pc(clk, reset_n, );
+
     control_unit control_unit(opcode, func, RegDst, Jump, Branch, MemRead, MemtoReg, ALUOp, MemWrite, ALUSrc, RegWrite);
+
+    sign_extender(imm, extended_imm);
+
+    multiplexer mux1(); // register input MUX
+    multiplexer mux2(read_data_2, extended_imm, ALUSrc, mux2_output); // ALU input MUX
+    multiplexer mux3(); // PC + 4 MUX
+    multiplexer mux4(); // other PC MUX
+    multiplexer mux5(); // data memory MUX
 
     register_file register(rs, rt, write_data, rd, RegWrite, clk, reset_n, read_data_1, read_data_2);
 
     alu alu(ALUOp, read_data_1, read_data_2, imm, zero, ALU_result);
 
-    always @(posedge clk)
+    always @(posedge clk or posedge reset_n)
     begin
-        if(opcode == `JMP_OP) begin
-            pc = target_address;
+        if(reset_n) begin
+            pc <= 0;
+        end
+        else if(opcode == `JMP_OP) begin
+            pc <= target_address;
         end
         else if(opcode == `BNE_OP || opcode == `BEQ_OP || opcode == `BGZ_OP || opcode == `BLZ_OP) begin
-            pc = pc + 1 + $signed(imm);
+            pc <= pc + 1 + $signed(imm);
         end
         else begin
-            pc = pc + 1;
+            pc <= pc + 1;
         end
     end
 
