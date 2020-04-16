@@ -54,11 +54,14 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 
     sign_extender(imm, extended_imm);
 
+    adder adder1(pc, 16'd4); // PC = PC + 4
+    adder adder2(pc, );
+
     multiplexer mux1(); // register input MUX
     multiplexer mux2(read_data_2, extended_imm, ALUSrc, mux2_output); // ALU input MUX
     multiplexer mux3(); // PC + 4 MUX
     multiplexer mux4(); // other PC MUX
-    multiplexer mux5(); // data memory MUX
+    //multiplexer mux5(ALU_result, ); // data memory MUX
 
     register_file register(rs, rt, write_data, rd, RegWrite, clk, reset_n, read_data_1, read_data_2);
 
