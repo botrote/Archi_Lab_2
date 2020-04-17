@@ -70,12 +70,20 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 
     alu alu1(ALUOp, read_data_1, mux2_output, zero, ALU_result);
 
-    if(readM == 1) begin // input data: instruction
-        assign address = ALU_result;
+    initial begin
+        readM = 1;
+        writeM = 0;
     end
-    if(writeM == 1) begin // input data : write_data
-        assign data = read_data_2;
+
+    if(inputReady == 1) begin
+        writeM = 1;
+        data = ALU_result;
     end
+    else if(ackOutput == 1) begin
+        readM = 1;
+        writeM = 0;
+    end
+
 
     always @(posedge clk or posedge reset_n)
     begin
@@ -85,6 +93,8 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
         else begin
             pc <= mux4_output;
         end
+
+        address <= pc;
     end
 
 endmodule
