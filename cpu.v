@@ -10,6 +10,11 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
     input reset_n;
     input clk;
 
+    reg readM;
+    reg writeM;
+    reg [`WORD_SIZE - 1:0] address;
+    reg [`WORD_SIZE - 1:0] data_temp;
+
     // instruction elements
     wire [3:0] opcode;
     wire [1:0] rs;
@@ -28,7 +33,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
     wire [1:0] mux1_output;
     wire [`WORD_SIZE - 1:0] mux2_output;
     wire [`WORD_SIZE - 1:0] mux3_output;
-    wire [`WORD_SIXE - 1:0] mux4_output;
+    wire [`WORD_SIZE - 1:0] mux4_output;
 
     // register input, output
     wire [`WORD_SIZE - 1:0] read_data_1, read_data_2;
@@ -70,25 +75,21 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 
     alu alu1(ALUOp, read_data_1, mux2_output, zero, ALU_result);
 
-    initial begin
-        readM = 1;
-        writeM = 0;
-    end
-
     always @(inputReady) begin
         if(inputReady == 1) begin
-            writeM = 1;
-            data = ALU_result;
-            adress = pc;
+            writeM <= 1;
+            data_temp <= ALU_result;
+            address <= pc;
         end
     end
     always @(ackOutput) begin
         if(ackOutput == 1) begin
-            readM = 1;
-            writeM = 0;
+            readM <= 1;
+            writeM <= 0;
         end
     end
 
+    assign data = data_temp;
 
     always @(posedge clk or posedge reset_n)
     begin
