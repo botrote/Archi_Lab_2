@@ -4,7 +4,6 @@ module alu (
 	ALUOp,
 	data_1,
 	data_2,
-	imm,
 
 	zero,
 	ALU_result
@@ -13,7 +12,6 @@ module alu (
     input [2:0] ALUOp;
     input [`WORD_SIZE-1:0] data_1;
     input [`WORD_SIZE-1:0] data_2;
-    input [11:0] imm;
 
     output zero;
     output [`WORD_SIZE-1:0] ALU_result;
@@ -75,7 +73,7 @@ module alu (
 			end
 
 			`FUNC_SHL : begin
-				ALU_result = data_1 << imm;
+				ALU_result = data_1 << data_2;
 				if(ALU_result == 0)
 					zero = 1;
 				else
@@ -83,7 +81,7 @@ module alu (
 			end
 
 			`FUNC_SHR : begin
-				ALU_result = data_1 >> imm;
+				ALU_result = data_1 >> data_2;
 				if(ALU_result == 0)
 					zero = 1;
 				else
