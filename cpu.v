@@ -70,10 +70,10 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 
     alu alu1(ALUOp, read_data_1, mux2_output, zero, ALU_result);
 
-    if(readM == 1) begin
+    if(readM == 1) begin // input data: instruction
         assign address = ALU_result;
     end
-    if(writeM == 1) begin
+    if(writeM == 1) begin // input data : write_data
         assign data = read_data_2;
     end
 
