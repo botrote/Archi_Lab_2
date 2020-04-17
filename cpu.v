@@ -27,21 +27,21 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
     // MUX output
     wire [1:0] mux1_output;
     wire [`WORD_SIZE - 1:0] mux2_output;
-    //wire mux3_output;
-    //wire mux4_output;
+    wire [`WORD_SIZE - 1:0] mux3_output;
+    wire [`WORD_SIXE - 1:0] mux4_output;
 
     // register input, output
     wire [`WORD_SIZE - 1:0] read_data_1, read_data_2;
     wire [`WORD_SIZE - 1:0] write_data;
-
 
     // ALU input, output
     wire zero;
     wire ALU_result;
 
     reg [`WORD_SIZE - 1:0] pc = 16'h0;
-    wire [`WORD_SIZE - 1:0] pc_1;
-    wire [`WORD_SIZE - 1:0] pc_2;
+    wire [`WORD_SIZE - 1:0] pc_4;
+    wire [`WORD_SIZE - 1:0] other_pc;
+    assign pc_4 = pc + 16'h4;
 
     assign opcode = data[15:12];
     assign rs = data[11:10];
@@ -51,38 +51,39 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
     assign imm = data[7:0];
     assign target_address = data[11:0];
 
-    pc pc1(clk, reset_n, new_PC, cur_PC);
-
     control_unit control_unit1(opcode, func, RegDst, Jump, Branch, MemRead, MemtoReg, ALUOp, MemWrite, ALUSrc, RegWrite);
 
     sign_extender sign_extender1(imm, extended_imm);
     shift shift_left_2(extended_imm, shift_result);
 
-    adder adder1(pc, 16'd4); // PC = PC + 4
-    adder adder2(pc, shift_result); // PC = PC + imm
+    adder adder2(pc_4, shift_result, other_pc); // PC = PC + imm
 
     multiplexer mux1(rd, rt, RegDst, mux1_output); // register input MUX
     multiplexer mux2(read_data_2, extended_imm, ALUSrc, mux2_output); // ALU input MUX
-    multiplexer mux3(); // PC + 4 MUX
-    multiplexer mux4(); // other PC MUX
 
-    register_file register(rs, rt, write_data, rd, RegWrite, clk, reset_n, read_data_1, read_data_2);
+    wire mux3_control_signal;
+    assign mux3_control_signal = Branch & zero;
+    multiplexer mux3(pc_4, other_pc, mux3_control_signal, mux3_output); // PC + 4 MUX
+    multiplexer mux4(mux3_output, ALU_result, Jump, mux4_output); // other PC MUX
 
-    alu alu1(ALUOp, read_data_1, mux2_output, imm, zero, ALU_result);
+    register_file register(rs, rt, write_data, mux1_output, RegWrite, clk, reset_n, read_data_1, read_data_2);
+
+    alu alu1(ALUOp, read_data_1, mux2_output, zero, ALU_result);
+
+    if(readM == 1) begin
+        assign address = ALU_result;
+    end
+    if(writeM == 1) begin
+        assign data = read_data_2;
+    end
 
     always @(posedge clk or posedge reset_n)
     begin
         if(reset_n) begin
             pc <= 0;
         end
-        else if(opcode == `JMP_OP) begin
-            pc <= target_address;
-        end
-        else if(opcode == `BNE_OP || opcode == `BEQ_OP || opcode == `BGZ_OP || opcode == `BLZ_OP) begin
-            pc <= pc + 1 + $signed(imm);
-        end
         else begin
-            pc <= pc + 1;
+            pc <= mux4_output;
         end
     end
 
