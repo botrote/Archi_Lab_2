@@ -20,14 +20,15 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
     wire [11:0] target;
 
     wire [`WORD_SIZE - 1:0] extended_imm;
+    wire [`WORD_SIZE - 1:0] shift_result;
 
     wire RegDst, Jump, Branch, MemRead, MemtoReg, ALUOp, MemWrite, ALUSrc, RegWrite; // control signals
 
     // MUX output
-    wire mux1_output;
-    wire mux2_output;
-    wire mux3_output;
-    wire mux4_output;
+    wire [1:0] mux1_output;
+    wire [`WORD_SIZE - 1:0] mux2_output;
+    //wire mux3_output;
+    //wire mux4_output;
 
     // register input, output
     wire [`WORD_SIZE - 1:0] read_data_1, read_data_2;
@@ -39,6 +40,8 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
     wire ALU_result;
 
     reg [`WORD_SIZE - 1:0] pc = 16'h0;
+    wire [`WORD_SIZE - 1:0] pc_1;
+    wire [`WORD_SIZE - 1:0] pc_2;
 
     assign opcode = data[15:12];
     assign rs = data[11:10];
@@ -48,24 +51,24 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
     assign imm = data[7:0];
     assign target_address = data[11:0];
 
-    pc pc(clk, reset_n, );
+    pc pc1(clk, reset_n, new_PC, cur_PC);
 
-    control_unit control_unit(opcode, func, RegDst, Jump, Branch, MemRead, MemtoReg, ALUOp, MemWrite, ALUSrc, RegWrite);
+    control_unit control_unit1(opcode, func, RegDst, Jump, Branch, MemRead, MemtoReg, ALUOp, MemWrite, ALUSrc, RegWrite);
 
-    sign_extender(imm, extended_imm);
+    sign_extender sign_extender1(imm, extended_imm);
+    shift shift_left_2(extended_imm, shift_result);
 
     adder adder1(pc, 16'd4); // PC = PC + 4
-    adder adder2(pc, );
+    adder adder2(pc, shift_result); // PC = PC + imm
 
-    multiplexer mux1(); // register input MUX
+    multiplexer mux1(rd, rt, RegDst, mux1_output); // register input MUX
     multiplexer mux2(read_data_2, extended_imm, ALUSrc, mux2_output); // ALU input MUX
     multiplexer mux3(); // PC + 4 MUX
     multiplexer mux4(); // other PC MUX
-    //multiplexer mux5(ALU_result, ); // data memory MUX
 
     register_file register(rs, rt, write_data, rd, RegWrite, clk, reset_n, read_data_1, read_data_2);
 
-    alu alu(ALUOp, read_data_1, read_data_2, imm, zero, ALU_result);
+    alu alu1(ALUOp, read_data_1, mux2_output, imm, zero, ALU_result);
 
     always @(posedge clk or posedge reset_n)
     begin
