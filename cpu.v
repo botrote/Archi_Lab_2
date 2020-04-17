@@ -76,12 +76,17 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
     end
 
     always @(inputReady) begin
-        writeM = 1;
-        data = ALU_result;
+        if(inputReady == 1) begin
+            writeM = 1;
+            data = ALU_result;
+            adress = pc;
+        end
     end
     always @(ackOutput) begin
-        readM = 1;
-        writeM = 0;
+        if(ackOutput == 1) begin
+            readM = 1;
+            writeM = 0;
+        end
     end
 
 
