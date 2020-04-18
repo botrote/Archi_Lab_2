@@ -7,7 +7,7 @@ module imm_generator2(
 );
 	input [11:0] imm;
 
-	output wire [`WORD_SIZE - 1:0] processed_imm;
+	output reg [`WORD_SIZE - 1:0] processed_imm;
 
 	integer i;
 	always @(*) begin
