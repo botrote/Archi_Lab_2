@@ -93,85 +93,85 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 			case(opcode)
 			`ADI_OP	:begin
 				registers[rt] = (registers[rs] + extended_imm);
-				end//4'd4
+			end
 
 			`ORI_OP	:begin
 				registers[rt] = (registers[rs] | $signed(imm));
-			end	//4'd5
+			end
 
 			`LHI_OP	:begin
 				registers[rt] = ($signed(imm) << 8);
-			end	//4'd6
+			end
 
 			`LWD_OP	:begin
 				address = (registers[rs] + extended_imm);
 				readM = 1;
-			end	//4'd7
+			end
 
 			`SWD_OP	:begin
 				address = (registers[rs] + extended_imm);
 				write_data = 1;
 				writeM = 1;
-			end	//4'd8
+			end
 
 			`BNE_OP	:begin
 				if(registers[rs] != registers[rt]) begin
 					pc = (pc + extended_imm);
 				end
-			end	//4'd0
+			end
 
 			`BEQ_OP	:begin
 				if(registers[rs] == registers[rt]) begin
 					pc = (pc + extended_imm);
 				end
-			end	//4'd1
+            end
 
 			`BGZ_OP	:begin
 				if((registers[rs][`WORD_SIZE - 1] == 0) && (registers[rs] != 0)) begin
 					pc = (pc + extended_imm);
 				end
-			end	//4'd2
+			end
 
 			`BLZ_OP	:begin
 				if((registers[rs][`WORD_SIZE - 1] == 1) && (registers[rs] != 0)) begin
 					pc = (pc + extended_imm);
 				end
-			end	//4'd3
+			end
 
 			`JMP_OP	:begin
 				pc = (pc & 16'hf000);
 				pc = (pc | $signed(target_address));
-			end	//4'd9
+			end
 
 			`JAL_OP :begin
 				registers[2] = pc;
 				pc = (pc & 16'hf000);
 				pc = (pc | extended_imm);
-			end	//4'd10
+			end
 
 			default :begin
 				case(func)
 					`FUNC_ADD : begin
 						registers[rd] = (registers[rs] + registers[rt]);
-					end	//3'b000
+					end
 					`FUNC_SUB : begin
 						registers[rd] = (registers[rs] - registers[rt]);
-					end //3'b001
+					end
 					`FUNC_AND : begin
 						registers[rd] = (registers[rs] & registers[rt]);
-					end	//3'b010
+					end
 					`FUNC_ORR :	begin
 						registers[rd] = (registers[rs] | registers[rt]);
-					end//3'b011
+					end
 					`FUNC_NOT :	begin
 						registers[rd] = ~registers[rs];
-					end	//3'b100
+					end
 					`FUNC_TCP :	begin
 						registers[rd] = (~registers[rs] + 1);
-					end	//3'b101
+					end
 					`FUNC_SHL : begin
 						registers[rd] = (registers[rs] << 1);
-					end		//3'b110
+                    end
 					`FUNC_SHR : begin
 						registers[rd] = registers[rs] >> 1;
 						if(registers[rs][15] == 1)
