@@ -87,6 +87,12 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 			func = data[5:0];
 			imm = data[7:0];
 			target_address = data[11:0];
+
+			if(imm[7] == 1)
+				extended_imm = {8'hff};
+			else
+				extended_imm = {8'h00, imm};
+
 		end
 
 		if(state == 2) begin
@@ -128,7 +134,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 					`INST_FUNC_SHL : begin
 						ALUOp = `FUNC_SHL;
 						registers[rd] = ALU_result;
-                    end
+                    			end
 
 					`INST_FUNC_SHR : begin
 						ALUOp = `FUNC_SHR;
@@ -148,19 +154,17 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 				endcase
 
 			case(opcode) // I, J-type
-			extended_imm = (imm[7] == 1) ? {8'hff, imm} : {8'h00, imm};
-
-			`ADI_OP	:begin
+			`ADI_OP	: begin
 				$display("ADI operation");
 				registers[rt] = (registers[rs] + extended_imm);
 			end
 
-			`ORI_OP	:begin
+			`ORI_OP	: begin
 				$display("ORI operation");
-				registers[rt] = (registers[rs] | extended_imm;
+				registers[rt] = registers[rs] | extended_imm;
 			end
 
-			`LHI_OP	:begin
+			`LHI_OP	: begin
 				$display("LHI operation");
 				registers[rt] = (extended_imm << 8);
 			end
