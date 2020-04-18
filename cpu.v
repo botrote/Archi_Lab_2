@@ -1,101 +1,97 @@
-`include "opcodes.v" 	   
+`include "opcodes.v"
 
 module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
-    output readM;
+    output reg readM;
     output writeM;
-    output [`WORD_SIZE-1:0] address;
-    inout [`WORD_SIZE-1:0] data;
+    output reg [`WORD_SIZE-1:0] address;
+    inout wire [`WORD_SIZE-1:0] data;
     input ackOutput;
     input inputReady;
-    input reset_n;
-    input clk;
+    input reset_n;                                 
+    input clk;                                      
+                                                                                                                                                      
+    reg [`WORD_SIZE - 1:0] PC;
+    wire [`WORD_SIZE - 1:0] nextPC;
+    
 
-    reg stage; // input or output (Memory Write or Read)
+    
 
-    // instruction elements
-    wire [3:0] opcode;
-    wire [1:0] rs;
-    wire [1:0] rt;
-    wire [1:0] rd;
-    wire [5:0] func;
-    wire [7:0] imm;
-    wire [11:0] target_address;
+    control_unit control_unit1 (ins, signal);
 
-    wire [`WORD_SIZE - 1:0] extended_imm;
-    wire [`WORD_SIZE - 1:0] shift_result;
+    //inputs for datapath
+    wire DI_readM;
+    wire DI_writeM; assign writeM = DI_writeM;
+    wire [`WORD_SIZE-1:0] DI_address;
+    reg [`WORD_SIZE-1:0] inputData;
+    wire [`WORD_SIZE-1:0] outputData;
 
-    wire [2:0] ALUOp;
-    wire RegDst, Jump, Branch, MemRead, MemtoReg, MemWrite, ALUSrc, RegWrite; // control signals
+    reg first;
 
-    // MUX output
-    wire [1:0] mux1_output;
-    wire [`WORD_SIZE - 1:0] mux2_output;
-    wire [`WORD_SIZE - 1:0] mux3_output;
-    wire [`WORD_SIZE - 1:0] mux4_output;
+    data_path DP (
+        DI_readM, 
+        DI_writeM, 
+        DI_address, 
+        inputData, 
+        outputData,
+        ackOutput, 
+        inputReady, 
+        instruction, 
+        signal, 
+        clk,
+        PC,
+        nextPC, 
+        reset_n
+    );
 
-    // register input, output
-    wire [`WORD_SIZE - 1:0] read_data_1, read_data_2;
-    wire [`WORD_SIZE - 1:0] write_data;
+    assign data = (!clk) ? outputData : `WORD_SIZE'bz;
 
-    // ALU input, output
-    wire zero;
-    wire [`WORD_SIZE - 1:0] ALU_result;
 
-    reg [`WORD_SIZE - 1:0] pc;
-    wire [`WORD_SIZE - 1:0] pc_4;
-    wire [`WORD_SIZE - 1:0] other_pc;
-    assign pc_4 = pc + 16'h4;
-
-    assign opcode = data[15:12];
-    assign rs = data[11:10];
-    assign rt = data[9:8];
-    assign rd = data[7:6];
-    assign func = data[5:0];
-    assign imm = data[7:0];
-    assign target_address = data[11:0];
-
-    control_unit control_unit1(opcode, func, RegDst, Jump, Branch, MemRead, MemtoReg, ALUOp, MemWrite, ALUSrc, RegWrite);
-
-    sign_extender sign_extender1(imm, extended_imm);
-    shift_left_2 shift_left_2(extended_imm, shift_result);
-
-    adder adder2(pc_4, shift_result, other_pc); // PC = PC + imm
-
-    multiplexer2 mux1(rd, rt, RegDst, mux1_output); // register input MUX
-    multiplexer mux2(read_data_2, extended_imm, ALUSrc, mux2_output); // ALU input MUX
-
-    wire mux3_control_signal;
-    assign mux3_control_signal = Branch & zero;
-    multiplexer mux3(pc_4, other_pc, mux3_control_signal, mux3_output); // PC + 4 MUX
-    multiplexer mux4(mux3_output, ALU_result, Jump, mux4_output); // other PC MUX
-
-    register_file register(rs, rt, write_data, mux1_output, RegWrite, clk, reset_n, read_data_1, read_data_2);
-
-    alu alu1(ALUOp, read_data_1, mux2_output, opcode, zero, ALU_result);
-
-    assign readM = MemRead;
-    assign writeM = MemWrite;
-    assign address = (stage) ? ALU_result : pc;
-    assign data = (writeM) ? ALU_result : 'bz;
-    //$display("data value %h", data);
-
-    initial begin
-	stage = 0;
-	pc = 0;
+    initial
+    begin
+        PC = 0;
+        address = 0;
+        readM = 1;
+        first = 1;
     end
 
     always @(*) begin
-        if(ackOutput == 1)
-            stage <= 0; // IF stage
-        else if(inputReady == 1)
-            stage <= 1; // MEM access stage
+        if(!reset_n) address = 0;
+        else if(clk) address = PC;
+        else address = DI_address;
     end
 
-    always @(posedge clk or posedge reset_n) begin
-	if(reset_n)
-	    pc <= 0;
-	else
-	    pc <= mux4_output;
-    	    $display("pc update value is %h", mux4_output);
+    always @ (posedge clk)
+    begin
+        if(!reset_n)
+        begin
+            first <= 1;
+            PC <= -1;
+            readM <= 1; 
+        end
+        else
+        begin
+            PC <= nextPC;
+            readM <= 1;
+        end
     end
+
+    always @ (DI_readM)
+    begin
+        if(clk == 0) readM <= 1;
+    end
+
+    always @ (posedge inputReady)
+    begin
+        if(first)
+        begin
+            instruction = data;
+            first = 0;
+        end
+        else begin
+            if(clk > 0) instruction <= data;
+            else if(clk == 0) inputData <= data;
+            readM <= 0;
+        end 
+    end
+    
 endmodule
