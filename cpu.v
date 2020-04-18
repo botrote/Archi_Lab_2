@@ -25,8 +25,8 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	reg [7:0]imm;
 	reg [11:0]target_address;
 
-	wire [`WORD_SIZE - 1:0] extended_imm;
-	imm_generator immGen1(imm, extended_imm);
+	reg [`WORD_SIZE - 1:0] extended_imm;
+	//imm_generator immGen1(imm, extended_imm);
 
 	reg [`WORD_SIZE - 1:0] registers[3:0];
 	reg [`WORD_SIZE - 1:0] pc;
@@ -48,12 +48,12 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	wire [2:0] ALUOp;
 	wire Regst, Jump, Branch, MemRead, MemtoReg, MemWrite, ALUSrc, RegWrite;
 	control_unit control_unit1(opcode, func, RegDst, Jump, Branch, MemRead, MemtoReg, ALUOp, MemWrite, ALUSrc, RegWrite);
-
-
-	wire zero;
-	wire[`WORD_SIZE] ALU_result;
-	alu ALU(ALUOp, data_1, data_2, zero, ALU_reult);
 	*/
+
+	reg [2:0] ALUOp;
+	reg [`WORD_SIZE - 1:0] data_1, data_2;
+	wire [`WORD_SIZE - 1:0] ALU_result;
+	alu ALU(ALUOp, data_1, data_2, ALU_result);
 
 	integer state; //state Identifier
 
@@ -90,7 +90,66 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 		end
 
 		if(state == 2) begin
-			case(opcode)
+			if(opcode == `ALU_OP) // R-type
+				data_1 = registers[rs];
+				data_2 = registers[rt];
+
+				case(func)
+					`INST_FUNC_ADD : begin
+						ALUOp = `FUNC_ADD;
+						registers[rd] = ALU_result;
+					end
+
+					`INST_FUNC_SUB : begin
+						ALUOp = `FUNC_SUB;
+						registers[rd] = ALU_result;
+					end
+
+					`INST_FUNC_AND : begin
+						ALUOp = `FUNC_AND;
+						registers[rd] = ALU_result;
+					end
+
+					`INST_FUNC_ORR : begin
+						ALUOp = `FUNC_ORR;
+						registers[rd] = ALU_result;
+					end
+
+					`INST_FUNC_NOT : begin
+						ALUOp = `FUNC_NOT;
+						registers[rd] = ALU_result;
+					end
+
+					`INST_FUNC_TCP : begin
+						ALUOp = `FUNC_TCP;
+						registers[rd] = ALU_result;
+					end
+
+					`INST_FUNC_SHL : begin
+						ALUOp = `FUNC_SHL;
+						registers[rd] = ALU_result;
+                    end
+
+					`INST_FUNC_SHR : begin
+						ALUOp = `FUNC_SHR;
+						registers[rd] = ALU_result;
+						if(data_1[15] == 1)
+							registers[rd] = registers[rd] + 16'h8000;
+					end
+
+					`INST_FUNC_JPR : begin
+						pc = data_1;
+					end
+
+					`INST_FUNC_JRL : begin
+						registers[2] = pc;
+						pc = data_1;
+					end
+				endcase
+
+			case(opcode) // I, J-type
+			extended_imm = (imm[7] == 1) ? {8'hff, imm} : {8'h00, imm};
+
 			`ADI_OP	:begin
 				$display("ADI operation");
 				registers[rt] = (registers[rs] + extended_imm);
@@ -98,12 +157,12 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 
 			`ORI_OP	:begin
 				$display("ORI operation");
-				registers[rt] = (registers[rs] | $signed(imm));
+				registers[rt] = (registers[rs] | extended_imm;
 			end
 
 			`LHI_OP	:begin
 				$display("LHI operation");
-				registers[rt] = ($signed(imm) << 8);
+				registers[rt] = (extended_imm << 8);
 			end
 
 			`LWD_OP	:begin
@@ -158,44 +217,8 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 				pc = (pc | extended_imm);
 			end
 
-			default :begin
-				case(func)
-					`FUNC_ADD : begin
-						registers[rd] = (registers[rs] + registers[rt]);
-					end
-					`FUNC_SUB : begin
-						registers[rd] = (registers[rs] - registers[rt]);
-					end
-					`FUNC_AND : begin
-						registers[rd] = (registers[rs] & registers[rt]);
-					end
-					`FUNC_ORR :	begin
-						registers[rd] = (registers[rs] | registers[rt]);
-					end
-					`FUNC_NOT :	begin
-						registers[rd] = ~registers[rs];
-					end
-					`FUNC_TCP :	begin
-						registers[rd] = (~registers[rs] + 1);
-					end
-					`FUNC_SHL : begin
-						registers[rd] = (registers[rs] << 1);
-                    end
-					`FUNC_SHR : begin
-						registers[rd] = registers[rs] >> 1;
-						if(registers[rs][15] == 1)
-							registers[rd] = registers[rd] + 16'h8000;
-					end
-					`INST_FUNC_JPR : begin
-						pc = registers[rs];
-					end
-					`INST_FUNC_JRL : begin
-						registers[2] = pc;
-						pc = registers[rs];
-					end
-				endcase
-			end
 		endcase
+
 		state = 3;
 		end
 

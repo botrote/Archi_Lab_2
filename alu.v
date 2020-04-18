@@ -5,7 +5,6 @@ module alu(
 	data_1,
 	data_2,
 
-	zero,
 	ALU_result
 );
 
@@ -56,6 +55,5 @@ module alu(
 			end
 		endcase
 
-		zero = (ALU_result == 0) ? 1 : 0;
 	end
 endmodule
