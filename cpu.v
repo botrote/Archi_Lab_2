@@ -26,7 +26,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	reg [11:0]target_address;
 
 	wire [`WORD_SIZE - 1:0] extended_imm;
-	imm_generator immGen1(imm, extended_imm)
+	imm_generator immGen1(imm, extended_imm);
 
 	reg [`WORD_SIZE - 1:0] registers[3:0];
 	reg [`WORD_SIZE - 1:0] pc;
@@ -36,7 +36,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	initial begin
 		address = 16'h0000;
 		pc = 16'h000;
-		for (i = 0; i< 4; i = i + 1)begin
+		for (i = 0; i< 4; i = i + 1) begin
 			registers[i] = 16'h0000;
 		end
 		write_data = 0;
@@ -87,8 +87,6 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 			func = data[5:0];
 			imm = data[7:0];
 			target_address = data[11:0];
-
-			se = 16'h0000;
 		end
 
 		if(state == 2) begin
@@ -175,25 +173,19 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 						registers[rd] = (registers[rs] << 1);
 					end		//3'b110
 					`FUNC_SHR : begin
-						registers[rd] = ARS(registers[rs]);
-					end	//3'b111
-					//`INST_FUNC_ADD : 	//6'd0
-					//`INST_FUNC_SUB :	//6'd1
-					//`INST_FUNC_AND :	//6'd2
-					//`INST_FUNC_ORR :	//6'd3
-					//`INST_FUNC_NOT :	//6'd4
-					//`INST_FUNC_TCP :	//6'd5
-					//`INST_FUNC_SHL :	//6'd6
-					//`INST_FUNC_SHR :	//6'd7
+						registers[rd] = registers[rs] >> 1;
+						if(registers[rs][15] == 1)
+							registers[rd] = registers[rd] + 16'h8000;
+					end
 					`INST_FUNC_JPR : begin
 						pc = registers[rs];
-					end	//6'd25
+					end
 					`INST_FUNC_JRL : begin
 						registers[2] = pc;
 						pc = registers[rs];
-					end	//6'd26
+					end
 				endcase
-			end	//4'd15 ALU, JPR, JRL
+			end
 		endcase
 		state = 3;
 		end
