@@ -48,21 +48,42 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 
 	assign data = write_data ? regi[rt] : `WORD_SIZE'bz;
 
-	always @(posedge clk) begin
-		address = pc;
-		readM = 1;
-		wait(inputReady);
+	integer state; //state Identifier
+
+	always @(inputReady) begin
+	if(inputReady == 1 && state == 0)
+		state = 1; //instruction fetch
+	if(inputReady == 0 && state == 1)
+		state = 2; //instruction execute
+	if(inputReady == 1 && state == 2)
+		state = 4; //read memory
+	if(inputReady == 0 && state == 4)
+		state = 3; //empty state(final state)
+	end
+
+	always @(ackOutput) begin
+	if(ackOutput == 1)
+		state = 5; //write memory
+	if(ackOutput == 0)
+		state = 3; //empty state(final state)
+	end
+
+	always @(state) begin
+	if(state == 1)
+		begin
 		readM = 0;
 		opcode = data[`WORD_SIZE - 1: 12];
-		rs = data[11: 10];
-		rt = data[9: 8];
-		rd = data[7: 6];
+		rs = data[11:10];
+		rt = data[9:8];
+		rd = data[7:6];
 		func = data[5:0];
 		imm = data[7:0];
 		jumpimm = data[11:0];
 		se = 16'h0000;
 		pc = pc + 1;
-		wait(!inputReady);
+		end
+	if(state == 2)
+		begin
 		case(opcode)
 			`ADI_OP	:begin
 				se = (se | imm);
@@ -89,10 +110,6 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 				end
 				address = (regi[rs] + se);
 				readM = 1;
-				wait(inputReady);
-				readM = 0;
-				regi[rt] = data;
-				wait(!inputReady);
 			end	//4'd7
 			`SWD_OP	:begin
 				se = (se | imm);
@@ -103,10 +120,6 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 				address = (regi[rs] + se);
 				write_data = 1;
 				writeM = 1;
-				wait(ackOutput);
-				writeM = 0;
-				write_data = 0;
-				wait(!ackOutput);
 				end	//4'd8
 			`BNE_OP	:begin
 				se = (se | imm);
@@ -211,5 +224,24 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 				endcase
 			end	//4'd15 ALU, JPR, JRL
 		endcase
+		state = 3;
+		end
+	if(state == 4)
+		begin
+		readM = 0;
+		regi[rt] = data;
+		end
+	if(state == 5)
+		begin
+		writeM = 0;
+		write_data = 0;
+		end
 	end
+
+	always @(posedge clk) begin
+		state = 0;
+		address = pc;
+		readM = 1;
+	end
+
 endmodule
