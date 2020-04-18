@@ -41,7 +41,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
     wire zero;
     wire [`WORD_SIZE - 1:0] ALU_result;
 
-    reg [`WORD_SIZE - 1:0] pc = 16'h0;
+    reg [`WORD_SIZE - 1:0] pc;
     wire [`WORD_SIZE - 1:0] pc_4;
     wire [`WORD_SIZE - 1:0] other_pc;
     assign pc_4 = pc + 16'h4;
@@ -79,7 +79,12 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
     assign data = (writeM) ? ALU_result : 'bz;
     //$display("data value %h", data);
 
-    always @(ackOutput, inputReady) begin
+    initial begin
+	stage = 0;
+	pc = 0;
+    end
+
+    always @(*) begin
         if(ackOutput == 1)
             stage <= 0; // IF stage
         else if(inputReady == 1)
