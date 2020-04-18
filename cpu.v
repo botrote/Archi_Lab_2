@@ -10,10 +10,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
     input reset_n;
     input clk;
 
-    reg readM;
-    reg writeM;
-    reg [`WORD_SIZE - 1:0] address;
-    reg [`WORD_SIZE - 1:0] data_temp;
+    reg stage; // input or output (Memory Write or Read)
 
     // instruction elements
     wire [3:0] opcode;
@@ -22,7 +19,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
     wire [1:0] rd;
     wire [5:0] func;
     wire [7:0] imm;
-    wire [11:0] target;
+    wire [11:0] target_address;
 
     wire [`WORD_SIZE - 1:0] extended_imm;
     wire [`WORD_SIZE - 1:0] shift_result;
@@ -75,32 +72,18 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 
     alu alu1(ALUOp, read_data_1, mux2_output, zero, ALU_result);
 
-    always @(inputReady) begin
-        if(inputReady == 1) begin
-            writeM <= 1;
-            data_temp <= ALU_result;
-            address <= pc;
-        end
-    end
-    always @(ackOutput) begin
-        if(ackOutput == 1) begin
-            readM <= 1;
-            writeM <= 0;
-        end
+    assign readM = MemRead;
+    assign writeM = MemWrite;
+    assign address = (stage) ? ALU_result : pc;
+    assign data = (writeM) ? ALU_result : 'bz;
+
+    always @(ackOutput, inputReady) begin
+        if(ackOutput == 1)
+            stage <= 0; // IF stage
+        else if(inputReady == 1)
+            stage <= 1; // MEM access stage
     end
 
-    assign data = data_temp;
-
-    always @(posedge clk or posedge reset_n)
-    begin
-        if(reset_n) begin
-            pc <= 0;
-        end
-        else begin
-            pc <= mux4_output;
-        end
-
-        address <= pc;
-    end
+    always @(posedge clk or posedge reset_n) begin
 
 endmodule

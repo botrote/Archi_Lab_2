@@ -25,6 +25,7 @@
 `define	FUNC_SHL	3'b110
 `define	FUNC_SHR	3'b111	
 
+
 // ALU instruction function codes
 `define INST_FUNC_ADD 6'd0
 `define INST_FUNC_SUB 6'd1

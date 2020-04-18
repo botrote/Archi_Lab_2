@@ -4,6 +4,7 @@ module alu (
 	ALUOp,
 	data_1,
 	data_2,
+    opcode,
 
 	zero,
 	ALU_result
@@ -12,6 +13,7 @@ module alu (
     input [2:0] ALUOp;
     input [`WORD_SIZE-1:0] data_1;
     input [`WORD_SIZE-1:0] data_2;
+    input [3:0] opcode;
 
     output zero;
     output [`WORD_SIZE-1:0] ALU_result;
@@ -34,7 +36,7 @@ module alu (
 
 			`FUNC_SUB : begin
 				ALU_result = data_1 - data_2; // Not Sure
-				if(ALU_result == 0)
+				if(opcode == `BNE_OP)
 					zero = 1;
 				else
 					zero = 0;
@@ -87,6 +89,11 @@ module alu (
 				else
 					zero = 0;
 			end
+
+            if(opcode == BNE_OP) begin
+                zero = ~zero;
+            end
+
 			endcase
 	end
 endmodule
