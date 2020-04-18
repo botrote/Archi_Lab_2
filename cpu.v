@@ -26,7 +26,9 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	reg [11:0]target_address;
 
 	reg [`WORD_SIZE - 1:0] extended_imm;
-	//imm_generator immGen1(imm, extended_imm);
+	imm_generator1 immGen1(imm, extended_imm);
+	reg [`WORD_SIZE - 1:0] extended_target;
+	imm_generator2 immGen2(target_address, extended_target);
 
 	reg [`WORD_SIZE - 1:0] registers[3:0];
 	reg [`WORD_SIZE - 1:0] pc;
@@ -75,6 +77,8 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 			state = 3; //empty state(final state)
 	end
 
+	reg [`WORD_SIZE - 1:0] extend_temp;
+
 	always @(state) begin
 		if(state == 1) begin // I stage
 			readM = 0;
@@ -88,11 +92,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 			imm = data[7:0];
 			target_address = data[11:0];
 
-			if(imm[7] == 1)
-				extended_imm = {8'hff};
-			else
-				extended_imm = {8'h00, imm};
-
+			extend_temp = 16'h0000;
 		end
 
 		if(state == 2) begin
@@ -161,12 +161,14 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 
 			`ORI_OP	: begin
 				$display("ORI operation");
-				registers[rt] = registers[rs] | extended_imm;
+				extended_temp = (extended_temp | imm)
+				registers[rt] = registers[rs] | extended_temp;
 			end
 
 			`LHI_OP	: begin
 				$display("LHI operation");
-				registers[rt] = (extended_imm << 8);
+				extended_temp = (extended_temp | imm)
+				registers[rt] = (extended_temp << 8);
 			end
 
 			`LWD_OP	:begin
@@ -212,7 +214,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 
 			`JMP_OP	:begin
 				pc = (pc & 16'hf000);
-				pc = (pc | $signed(target_address));
+				pc = (pc | extended_target);
 			end
 
 			`JAL_OP :begin

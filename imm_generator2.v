@@ -1,11 +1,11 @@
 `include "opcodes.v"
 
-module imm_generator(
+module imm_generator2(
 	imm,
 
 	processed_imm
 );
-	input [7:0] imm;
+	input [11:0] imm;
 
 	output reg [`WORD_SIZE - 1:0] processed_imm;
 
