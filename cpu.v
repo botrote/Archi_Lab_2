@@ -24,7 +24,8 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
     wire [`WORD_SIZE - 1:0] extended_imm;
     wire [`WORD_SIZE - 1:0] shift_result;
 
-    wire RegDst, Jump, Branch, MemRead, MemtoReg, ALUOp, MemWrite, ALUSrc, RegWrite; // control signals
+    wire [2:0] ALUOp;
+    wire RegDst, Jump, Branch, MemRead, MemtoReg, MemWrite, ALUSrc, RegWrite; // control signals
 
     // MUX output
     wire [1:0] mux1_output;
@@ -38,7 +39,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 
     // ALU input, output
     wire zero;
-    wire ALU_result;
+    wire [`WORD_SIZE - 1:0] ALU_result;
 
     reg [`WORD_SIZE - 1:0] pc = 16'h0;
     wire [`WORD_SIZE - 1:0] pc_4;
@@ -56,11 +57,11 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
     control_unit control_unit1(opcode, func, RegDst, Jump, Branch, MemRead, MemtoReg, ALUOp, MemWrite, ALUSrc, RegWrite);
 
     sign_extender sign_extender1(imm, extended_imm);
-    shift shift_left_2(extended_imm, shift_result);
+    shift_left_2 shift_left_2(extended_imm, shift_result);
 
     adder adder2(pc_4, shift_result, other_pc); // PC = PC + imm
 
-    multiplexer mux1(rd, rt, RegDst, mux1_output); // register input MUX
+    multiplexer2 mux1(rd, rt, RegDst, mux1_output); // register input MUX
     multiplexer mux2(read_data_2, extended_imm, ALUSrc, mux2_output); // ALU input MUX
 
     wire mux3_control_signal;
@@ -70,12 +71,13 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 
     register_file register(rs, rt, write_data, mux1_output, RegWrite, clk, reset_n, read_data_1, read_data_2);
 
-    alu alu1(ALUOp, read_data_1, mux2_output, zero, ALU_result);
+    alu alu1(ALUOp, read_data_1, mux2_output, opcode, zero, ALU_result);
 
     assign readM = MemRead;
     assign writeM = MemWrite;
     assign address = (stage) ? ALU_result : pc;
     assign data = (writeM) ? ALU_result : 'bz;
+    //$display("data value %h", data);
 
     always @(ackOutput, inputReady) begin
         if(ackOutput == 1)
@@ -85,5 +87,10 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
     end
 
     always @(posedge clk or posedge reset_n) begin
-
+	if(reset_n)
+	    pc <= 0;
+	else
+	    pc <= mux4_output;
+    	    $display("pc update value is %h", mux4_output);
+    end
 endmodule

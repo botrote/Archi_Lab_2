@@ -1,11 +1,11 @@
 `include "opcodes.v"
 
-module multiplexer (
-	input [`WORD_SIZE-1:0] input1,
-	input [`WORD_SIZE-1:0] input2,
+module multiplexer2 (
+	input [1:0] input1,
+	input [1:0] input2,
 	input control_signal,
 
-	output [`WORD_SIZE-1:0] output1
+	output [1:0] output1
 );
 
 

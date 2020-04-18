@@ -89,11 +89,9 @@ module alu (
 				else
 					zero = 0;
 			end
-
-            if(opcode == BNE_OP) begin
-                zero = ~zero;
-            end
-
 			endcase
+		        if(opcode == `BNE_OP) begin
+                		zero = ~zero;
+            		end
 	end
 endmodule
