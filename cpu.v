@@ -25,10 +25,8 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	reg [7:0] imm;
 	reg [11:0] target_address;
 
-	wire [`WORD_SIZE - 1:0] extended_imm;
-	imm_generator1 immGen1(imm, extended_imm);
-	wire [`WORD_SIZE - 1:0] extended_target;
-	imm_generator2 immGen2(target_address, extended_target);
+	reg [`WORD_SIZE - 1:0] extended_imm;
+	reg [`WORD_SIZE - 1:0] extended_target;
 
 	reg [`WORD_SIZE - 1:0] registers[3:0];
 	reg [`WORD_SIZE - 1:0] pc;
@@ -154,6 +152,21 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 				endcase
 
 			case(opcode) // I, J-type
+			extended_imm <= 16'h0000;
+			extended_imm = (extended_imm | imm) << 8;
+			for(i = 0; i< 8; i = i + 1) begin
+				extended_imm = extended_imm >> 1;
+				if(extended_imm[15] == 1)
+					extended_imm = pextended_imm + 16'h8000;
+
+			extended_target <= 16'h0000;
+			extended_target = (extended_target | target_address) << 8;
+			for(i = 0; i< 8; i = i + 1) begin
+				processed_target = processed_target >> 1;
+				if(processed_target[15] == 1)
+				processed_target = processed_target + 16'h8000;
+
+
 			`ADI_OP	: begin
 				$display("ADI operation");
 				registers[rt] = (registers[rs] + extended_imm);
