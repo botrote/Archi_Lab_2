@@ -92,47 +92,56 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 		if(state == 2) begin
 			case(opcode)
 			`ADI_OP	:begin
+				$display("ADI operation");
 				registers[rt] = (registers[rs] + extended_imm);
 			end
 
 			`ORI_OP	:begin
+				$display("ORI operation");
 				registers[rt] = (registers[rs] | $signed(imm));
 			end
 
 			`LHI_OP	:begin
+				$display("LHI operation");
 				registers[rt] = ($signed(imm) << 8);
 			end
 
 			`LWD_OP	:begin
+				$display("LWD operation");
 				address = (registers[rs] + extended_imm);
 				readM = 1;
 			end
 
 			`SWD_OP	:begin
+				$display("SWD operation");
 				address = (registers[rs] + extended_imm);
 				write_data = 1;
 				writeM = 1;
 			end
 
 			`BNE_OP	:begin
+				$display("BNE operation");
 				if(registers[rs] != registers[rt]) begin
 					pc = (pc + extended_imm);
 				end
 			end
 
 			`BEQ_OP	:begin
+				$display("BEQ operation");
 				if(registers[rs] == registers[rt]) begin
 					pc = (pc + extended_imm);
 				end
-            end
+            		end
 
 			`BGZ_OP	:begin
+				$display("BGZ operation");
 				if((registers[rs][`WORD_SIZE - 1] == 0) && (registers[rs] != 0)) begin
 					pc = (pc + extended_imm);
 				end
 			end
 
 			`BLZ_OP	:begin
+				$display("BLZ operation");
 				if((registers[rs][`WORD_SIZE - 1] == 1) && (registers[rs] != 0)) begin
 					pc = (pc + extended_imm);
 				end
