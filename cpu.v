@@ -108,22 +108,6 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 
 		if(state == 2) 
 		begin
-			extended_imm = (extended_imm | imm) << 8;
-			for(i = 0; i < 8; i = i + 1) begin
-				if(extended_imm[15] == 1)
-					extended_imm = (extended_imm >> 1) + 16'h8000;
-            			else
-                			extended_imm = extended_imm >> 1;
-			end
-
-			extended_target = (extended_target | target_address) << 8;
-			for(i = 0; i < 8; i = i + 1) begin
-				if(extended_target[15] == 1)
-			    	extended_target = (extended_target >> 1) + 16'h8000;
-            			else
-                			extended_target = extended_target >> 1;
-			end
-
 			if(opcode == `ALU_OP) 
 			begin // R-type
 				//data_1 = registers[rs];
@@ -201,6 +185,21 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 
         		else 
 			begin
+				extended_imm = (extended_imm | imm) << 8;
+				for(i = 0; i < 8; i = i + 1) begin
+					if(extended_imm[15] == 1)
+						extended_imm = (extended_imm >> 1) + 16'h8000;
+            		else
+                		extended_imm = extended_imm >> 1;
+				end
+
+				extended_target = (extended_target | target_address) << 8;
+				for(i = 0; i < 8; i = i + 1) begin
+					if(extended_target[15] == 1)
+			    		extended_target = (extended_target >> 1) + 16'h8000;
+            		else
+                		extended_target = extended_target >> 1;
+				end
 				case(opcode) // I, J-type
 				`ADI_OP	: 
 					begin
