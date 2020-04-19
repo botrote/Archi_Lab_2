@@ -19,13 +19,22 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
     	reg [`WORD_SIZE - 1:0] pc;
 
 	// instruction sub parts
-	reg [3:0] opcode;
-	reg [1:0] rs;
-	reg [1:0] rt;
-	reg [1:0] rd;
-	reg [5:0] func;
-	reg [7:0] imm;
-	reg [11:0] target_address;
+	wire [3:0] opcode;
+	wire [1:0] rs;
+	wire [1:0] rt;
+	wire [1:0] rd;
+	wire [5:0] func;
+	wire [7:0] imm;
+	wire [11:0] target_address;
+
+	assign opcode = data[15:12];
+	assign rs = data[11:10];
+	assign rt = data[9:8];
+	assign rd = data[7:6];
+	assign func = data[5:0];
+	assign imm = data[7:0];
+	assign target_address = data[11:0];
+
 
 	reg [`WORD_SIZE - 1:0] extended_imm;
 	reg [`WORD_SIZE - 1:0] extended_target;
@@ -86,13 +95,6 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 			readM = 0;
 			pc = pc + 1;
 
-			opcode = data[15:12];
-			rs = data[11:10];
-			rt = data[9:8];
-			rd = data[7:6];
-			func = data[5:0];
-			imm = data[7:0];
-			target_address = data[11:0];
         		extended_imm = 16'h0000;
         		extended_target = 16'h0000;
 
