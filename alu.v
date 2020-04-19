@@ -16,7 +16,7 @@ module alu(
 
 	//reg [`WORD_SIZE - 1:0] ALU_result_reg;
 
-	always @(*) begin
+	always @(data_1 or data_2 or func) begin
 		case(func)
 			`INST_FUNC_ADD: begin
 				$display("%h", ALU_result);

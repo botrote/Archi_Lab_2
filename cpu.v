@@ -53,8 +53,12 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 
 	//reg [2:0] ALUOp;
 	reg [`WORD_SIZE - 1:0] data_1, data_2;
+	wire [`WORD_SIZE - 1:0] data_1_wire, data_2_wire;
+	assign data_1_wire = data_1;
+	assign data_2_wire = data_2;
+
 	wire [`WORD_SIZE - 1:0] ALU_result;
-	alu ALU(func, data_1, data_2, ALU_result);
+	alu ALU(func, data_1_wire, data_2_wire, ALU_result);
 
 	integer state; //state Identifier
 
@@ -98,6 +102,9 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
         		extended_target = 16'h0000;
 
 			extended_temp = 16'h0000;
+
+			data_1 = registers[rs];
+			data_2 = registers[rt];
 	    	end
 
 		if(state == 2) 
