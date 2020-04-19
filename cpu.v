@@ -27,8 +27,8 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	reg [7:0] imm;
 	reg [11:0] target_address;
 
-	wire [7:0] imm_wire, 
-	wire [11:0] target_address_wire
+	wire [7:0] imm_wire;
+	wire [11:0] target_address_wire;
 
 	assign imm_wire = imm;
 	assign target_address_wire = target_address;
@@ -197,7 +197,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 				`LHI_OP	: 
 					begin
 						//$display("LHI operation");
-						registers[rt] = extended_imm2;
+						registers[rt] = (extended_imm2 << 8);
 					end
 	
 				`LWD_OP	:

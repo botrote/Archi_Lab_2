@@ -17,7 +17,7 @@ module immediate_generator(
 	integer i;
 	always @(*)
 	begin
-		extended_target = (target_address | 16'h0000) << 8;
+		extended_target = (extended_address | 16'h0000) << 8;
 		for(i = 0; i < 8; i = i + 1) begin
 			if(extended_target[15] == 1)
 				extended_target = (extended_target >> 1) + 16'h8000;
