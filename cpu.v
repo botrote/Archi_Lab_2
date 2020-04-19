@@ -27,8 +27,14 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	reg [7:0] imm;
 	reg [11:0] target_address;
 
-	reg [`WORD_SIZE - 1:0] extended_imm;
-	reg [`WORD_SIZE - 1:0] extended_target;
+	wire [7:0] imm_wire, 
+	wire [11:0] target_address_wire
+
+	assign imm_wire = imm;
+	assign target_address_wire = target_address;
+
+	wire [`WORD_SIZE - 1:0] extended_target, extended_imm1, extended_imm2; 
+	immediate_generator immGen(imm_wire, target_address_wire, extended_target, extended_imm1, extended_imm2);
 
 	reg [`WORD_SIZE - 1:0] registers[3:0];
 	reg write_data;
@@ -98,11 +104,6 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 			imm = data[7:0];
 			target_address = data[11:0];
 
-        		extended_imm = 16'h0000;
-        		extended_target = 16'h0000;
-
-			extended_temp = 16'h0000;
-
 			data_1 = registers[rs];
 			data_2 = registers[rt];
 	    	end
@@ -114,42 +115,42 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 				data_1 = registers[rs];
 				data_2 = registers[rt];
 
-				$display("data1 %h data2 %h register1 %h register2 %h", data_1, data_2, registers[rs], registers[rt]);
+				//$display("data1 %h data2 %h register1 %h register2 %h", data_1, data_2, registers[rs], registers[rt]);
 
 				case(func)
 				`INST_FUNC_ADD : 
 					begin
-						$display("%h + %h = %h", data_1, data_2, ALU_result);
+						//$display("%h + %h = %h", data_1, data_2, ALU_result);
 						registers[rd] = ALU_result;
 					end
 
 				`INST_FUNC_SUB : 
 					begin
-						$display("%h - %h = %h", data_1, data_2, ALU_result);
+						//$display("%h - %h = %h", data_1, data_2, ALU_result);
 						registers[rd] = ALU_result;
 					end
 
 				`INST_FUNC_AND : 
 					begin
-						$display("%h & %h = %h", data_1, data_2, ALU_result);
+						//$display("%h & %h = %h", data_1, data_2, ALU_result);
 						registers[rd] = ALU_result;
 					end
 
 				`INST_FUNC_ORR : 
 					begin
-						$display("%h | %h = %h", data_1, data_2, ALU_result);
+						//$display("%h | %h = %h", data_1, data_2, ALU_result);
 						registers[rd] = ALU_result;
 					end
 
 				`INST_FUNC_NOT : 
 					begin
-						$display("%h * - 1 = %h", data_1, ALU_result);
+						//$display("%h * - 1 = %h", data_1, ALU_result);
 						registers[rd] = ALU_result;
 					end
 				
 				`INST_FUNC_TCP : 
 					begin
-                        $display("~%h + 1 = %h", data_1, ALU_result);
+                        //$display("~%h + 1 = %h", data_1, ALU_result);
 						registers[rd] = ALU_result;
 					end
 
@@ -180,53 +181,36 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 
         		else 
 			begin
-				extended_imm = (extended_imm | imm) << 8;
-				for(i = 0; i < 8; i = i + 1) begin
-					if(extended_imm[15] == 1)
-						extended_imm = (extended_imm >> 1) + 16'h8000;
-            		else
-                		extended_imm = extended_imm >> 1;
-				end
-
-				extended_target = (extended_target | target_address) << 8;
-				for(i = 0; i < 8; i = i + 1) begin
-					if(extended_target[15] == 1)
-			    		extended_target = (extended_target >> 1) + 16'h8000;
-            		else
-                		extended_target = extended_target >> 1;
-				end
 				case(opcode) // I, J-type
 				`ADI_OP	: 
 					begin
-						$display("ADI operation");
-						registers[rt] = (registers[rs] + extended_imm);
+						//$display("ADI operation");
+						registers[rt] = (registers[rs] + extended_imm1);
 					end
 
 				`ORI_OP	: 
 					begin
-						$display("ORI operation");
-						extended_temp = (extended_temp | imm);
-						registers[rt] = registers[rs] | extended_temp;
+						//$display("ORI operation");
+						registers[rt] = registers[rs] | extended_imm2;
 					end
 
 				`LHI_OP	: 
 					begin
-						$display("LHI operation");
-						extended_temp = (extended_temp | imm);
-						registers[rt] = (extended_temp << 8);
+						//$display("LHI operation");
+						registers[rt] = extended_imm2;
 					end
 	
 				`LWD_OP	:
 					begin
 						$display("LWD operation");
-						address = (registers[rs] + extended_imm);
+						address = (registers[rs] + extended_imm1);
 						readM = 1;
 					end
 	
 				`SWD_OP	:
 					begin
 						$display("SWD operation");
-						address = (registers[rs] + extended_imm);
+						address = (registers[rs] + extended_imm1);
 						write_data = 1;
 						writeM = 1;
 					end
@@ -235,7 +219,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 					begin
 						$display("BNE operation");
 						if(registers[rs] != registers[rt]) begin
-							pc = (pc + extended_imm);
+							pc = (pc + extended_imm1);
 						end
 					end
 	
@@ -243,7 +227,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 					begin
 						$display("BEQ operation");
 						if(registers[rs] == registers[rt]) begin
-							pc = (pc + extended_imm);
+							pc = (pc + extended_imm1);
 						end
 					end
 	
@@ -251,7 +235,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 					begin
 						$display("BGZ operation");
 						if((registers[rs][`WORD_SIZE - 1] == 0) && (registers[rs] != 0)) begin
-							pc = (pc + extended_imm);
+							pc = (pc + extended_imm1);
 				 		end
 					end
 	
@@ -259,7 +243,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 					begin
 						$display("BLZ operation");
 						if((registers[rs][`WORD_SIZE - 1] == 1) && (registers[rs] != 0)) begin
-							pc = (pc + extended_imm);
+							pc = (pc + extended_imm1);
 				    		end
 					end
 	
@@ -273,7 +257,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 					begin
 						registers[2] = pc;
 						pc = (pc & 16'hf000);
-						pc = (pc | extended_imm);
+						pc = (pc | extended_imm1);
 					end
 				endcase	
 			end

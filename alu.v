@@ -19,10 +19,10 @@ module alu(
 	always @(data_1 or data_2 or func) begin
 		case(func)
 			`INST_FUNC_ADD: begin
-				$display("%h", ALU_result);
-				$display("inside ALU %h %h", data_1, data_2);
+				//$display("%h", ALU_result);
+				//$display("inside ALU %h %h", data_1, data_2);
 				ALU_result = data_1 + data_2;
-				$display("%h", ALU_result);
+				//$display("%h", ALU_result);
 			end
 
 			`INST_FUNC_SUB: begin 
