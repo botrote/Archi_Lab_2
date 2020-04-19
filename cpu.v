@@ -102,18 +102,20 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 		if(state == 2) 
 		begin
 			extended_imm = (extended_imm | imm) << 8;
-			for(i = 0; i< 8; i = i + 1) begin
+			for(i = 0; i < 8; i = i + 1) begin
 				if(extended_imm[15] == 1)
 					extended_imm = (extended_imm >> 1) + 16'h8000;
             			else
                 			extended_imm = extended_imm >> 1;
+			end
 
 			extended_target = (extended_target | target_address) << 8;
-			for(i = 0; i< 8; i = i + 1) begin
+			for(i = 0; i < 8; i = i + 1) begin
 				if(extended_target[15] == 1)
 			    	extended_target = (extended_target >> 1) + 16'h8000;
             			else
                 			extended_target = extended_target >> 1;
+			end
 
 			if(opcode == `ALU_OP) 
 			begin // R-type
@@ -124,31 +126,36 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 				`INST_FUNC_ADD : 
 					begin
 						ALUOp = `FUNC_ADD;
+						$display("%h + %h = %h", data_1, data_2, ALU_result);
 						registers[rd] = ALU_result;
 					end
 
 				`INST_FUNC_SUB : 
 					begin
 						ALUOp = `FUNC_SUB;
+						$display("%h - %h = %h", data_1, data_2, ALU_result);
 						registers[rd] = ALU_result;
 					end
 
 				`INST_FUNC_AND : 
 					begin
 						ALUOp = `FUNC_AND;
+						$display("%h & %h = %h", data_1, data_2, ALU_result);
 						registers[rd] = ALU_result;
 					end
 
 				`INST_FUNC_ORR : 
 					begin
 						ALUOp = `FUNC_ORR;
+						$display("%h | %h = %h", data_1, data_2, ALU_result);
 						registers[rd] = ALU_result;
 					end
 
 				`INST_FUNC_NOT : 
 					begin
 						ALUOp = `FUNC_NOT;
-					registers[rd] = ALU_result;
+						$display("%h * - 1 = %h", data_1, ALU_result);
+						registers[rd] = ALU_result;
 					end
 				
 				`INST_FUNC_TCP : 
@@ -182,6 +189,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 						pc = data_1;
 					end
 				endcase
+			end
 
         		else 
 			begin
@@ -268,17 +276,19 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 				endcase	
 			end
 
-		state = 3;
+			state = 3;
 		end
 
-	if(state == 4) begin
-		readM = 0;
-		registers[rt] = data;
+		if(state == 4) 
+		begin
+			readM = 0;
+			registers[rt] = data;
 		end
 
-	if(state == 5) begin
-		writeM = 0;
-		write_data = 0;
+		if(state == 5) 
+		begin
+			writeM = 0;
+			write_data = 0;
 		end
 	end
 
