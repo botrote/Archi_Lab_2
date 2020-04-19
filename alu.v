@@ -1,58 +1,59 @@
 `include "opcodes.v"
 
-module alu (
+module alu(
 	func,
-	data_1, 
-	data_2, 
+	data_1,
+	data_2,
 
-	zero,
 	ALU_result
 );
-	input [2:0] func;
+
+	input [5:0] func;
 	input [`WORD_SIZE - 1:0] data_1;
 	input [`WORD_SIZE - 1:0] data_2;
 
-	output [`WORD_SIZE - 1:0] ALU_result;
+	output reg [`WORD_SIZE - 1:0] ALU_result;
 
-	reg [`WORD_SIZE - 1:0] ALU_result;
+	//reg [`WORD_SIZE - 1:0] ALU_result_reg;
 
-	initial begin
-		ALU_result = 0;
-	end   	
-	
-	always @(*) begin
+	always @(data_1 or data_2 or func) begin
 		case(func)
-			`FUNC_ADD: begin 
-				ALU_result = data_1 + data_2; 
+			`INST_FUNC_ADD: begin
+				$display("%h", ALU_result);
+				$display("inside ALU %h %h", data_1, data_2);
+				ALU_result = data_1 + data_2;
+				$display("%h", ALU_result);
 			end
 
-			`FUNC_SUB: begin 
+			`INST_FUNC_SUB: begin 
 				ALU_result = data_1 - data_2; 
 			end
 			
-			`FUNC_NOT: begin 
+			`INST_FUNC_NOT: begin 
 				ALU_result = ~data_1; 
 			end
 			
-			`FUNC_AND: begin 
+			`INST_FUNC_AND: begin 
 				ALU_result = data_1 & data_2; 
 			end
 
-			`FUNC_ORR: begin 
+			`INST_FUNC_ORR: begin 
 				ALU_result = data_1 | data_2; 
 			end
 			
-			`FUNC_TCP: begin 
+			`INST_FUNC_TCP: begin 
 				ALU_result = ~(data_1) + 1; 
 			end
 			
-			`FUNC_SHL: begin 
+			`INST_FUNC_SHL: begin 
 				ALU_result = data_1 << 1; 
 			end
 			
-			`FUNC_SHR: begin 
+			`INST_FUNC_SHR: begin 
 				ALU_result = data_1 >> 1; 
 			end
 		endcase
 	end
+
+	//assign ALU_result = ALU_result_reg;
 endmodule

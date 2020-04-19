@@ -1,4 +1,4 @@
-`timescale 1ns/100ps																											  
+`timescale 1ns/100ps
 
 `define PERIOD1 100				// timing for single cycles
 `define READ_DELAY 30   		// delay before memory data is ready
@@ -7,39 +7,39 @@
 `define MEMORY_SIZE 256	// size of memory is 2^8 words (reduced size)
 `define WORD_SIZE 16    		//   instead of 2^16 words to reduce memory
 
-module tb_cpu_f();	
+module tb_cpu_f();
 
 	integer f;
-					  
-  	wire readM;										// read from memory									
+
+  	wire readM;										// read from memory
   	wire writeM;										// write to memory
   	wire [`WORD_SIZE-1:0] address;	// current address for data input or output
-  	wire [`WORD_SIZE-1:0] data;    		// data being input or output	
+  	wire [`WORD_SIZE-1:0] data;    		// data being input or output
   	reg ackOutput;									// acknowledge of data receipt from output port
   	reg inputReady; 								// indicates that data is ready from the input port
   	reg reset_n;    									// active-low RESET signal
-  	reg clk;        										// clock signal																																  
-  												
-  	cpu UUT (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);																				   
-  																  														  										    
+  	reg clk;        										// clock signal
+
+  	cpu UUT (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
+
   	always #(`PERIOD1/2)clk = ~clk;  	// generates a clock (period = `PERIOD1)
-			  
+
   	initial begin
 	f = $fopen("output.txt", "w");
 
     	clk = 0;
 		ackOutput = 0;
-		inputReady = 0;								 		
-	
+		inputReady = 0;
+
 		// generate a LOW pulse for reset_n
-    	reset_n = 1;       
+    	reset_n = 1;
     	#(`PERIOD1/4) reset_n = 0;
     	#`PERIOD1 reset_n = 1;
   	end
-																																							 
+
   	reg [`WORD_SIZE-1:0] memory [0:`MEMORY_SIZE-1];
-  	reg [`WORD_SIZE-1:0] loadedData;  // data loaded during a memory read  
-																						  
+  	reg [`WORD_SIZE-1:0] loadedData;  // data loaded during a memory read
+
   	assign data = (readM || inputReady) ? loadedData : `WORD_SIZE'bz;
   	always begin
     	loadedData = `WORD_SIZE'bz;
@@ -48,21 +48,21 @@ module tb_cpu_f();
       		wait (readM == 1 || writeM == 1);
 	  		if (readM == 1) begin
       			#`READ_DELAY;
-      			loadedData = memory[address];  
-	  			inputReady = 1;		  
-      			#(`STABLE_TIME);			
+      			loadedData = memory[address];
+	  			inputReady = 1;
+      			#(`STABLE_TIME);
 	  			inputReady = 0;
-      			loadedData = `WORD_SIZE'bz;	 
+      			loadedData = `WORD_SIZE'bz;
 	  		end else if (writeM == 1) begin
 				memory[address] = data;
 				#`WRITE_DELAY;
 				ackOutput = 1;
-				#(`STABLE_TIME);								  
-				ackOutput = 0;							
+				#(`STABLE_TIME);
+				ackOutput = 0;
 	  		end
     	end  // of forever loop
   	end  // of always block for memory read
-  
+
   	// store programs and data in the memory
 	initial begin
     	#`PERIOD1;   // delay for a while
@@ -103,64 +103,64 @@ module tb_cpu_f();
 		memory[34] = 0;
 		memory[35] = 0;
  	end
-  
- 	// Test cpu behavior 									
+
+ 	// Test cpu behavior
 	integer Passed;
 	integer Failed;
- 	reg [`WORD_SIZE-1:0] num_cycle;	// number of instruction during execution	  
+ 	reg [`WORD_SIZE-1:0] num_cycle;	// number of instruction during execution
  	initial begin
 		 Passed = 0;
 		 Failed = 0;
-		 num_cycle = 0;	  
+		 num_cycle = 0;
 	end
  	always @(posedge clk) begin
 		if (!reset_n) num_cycle = 0;
 		else num_cycle = num_cycle + 1;
 		if (num_cycle > 45) begin
-			$fdisplay(f, "Passed = %0d, Failed = %0d", Passed, Failed);	
+			$fdisplay(f, "Passed = %0d, Failed = %0d", Passed, Failed);
 			$finish();
 		end
- 	end				  
-  	
-  	task Test;						  
+ 	end
+
+  	task Test;
 	  	input [`WORD_SIZE-1:0] num_cycle_;
 	  	input [`WORD_SIZE-1:0] target_address_;
 	  	input [`WORD_SIZE-1:0] expected_value_;
-		  					
-		begin		   
-		$fdisplay(f, "#%d :", num_cycle_);			
+
+		begin
+		$fdisplay(f, "#%d :", num_cycle_);
 		if (memory[target_address_] == expected_value_)
-			begin								   
+			begin
 				$fdisplay(f, "PASSED");
 				Passed = Passed + 1;
 			end
-		else   
-			begin											  
+		else
+			begin
 				$fdisplay(f, "FAILED");
 				$fdisplay(f, "num_cycle = %d, memory[%0d] = %d (Ans : %d)", num_cycle_, target_address_, memory[target_address_], expected_value_);
 				Failed = Failed + 1;
 			end
 		end
 	endtask
-  
+
   always @(posedge clk) begin
 	 #(`PERIOD1)
      case (num_cycle)
-        3: Test(num_cycle, 32, 10);	 
-        7: Test(num_cycle, 30, 5);		 
-        8: Test(num_cycle, 31, 10);		 
-        12: Test(num_cycle, 30, 2);		 
-        13: Test(num_cycle, 31, 15);	 
-        17: Test(num_cycle, 30, 1);	  
-        18: Test(num_cycle, 31, 17);  
-        22: Test(num_cycle, 30, 0);	   
-        23: Test(num_cycle, 31, 18);   
-        26: Test(num_cycle, 33, 18);   
-        28: Test(num_cycle, 34, 12);   
-        38: Test(num_cycle, 30, 24);   
-        39: Test(num_cycle, 31, 3);	    
-        40: Test(num_cycle, 32, 12);    
+        3: Test(num_cycle, 32, 10);
+        7: Test(num_cycle, 30, 5);
+        8: Test(num_cycle, 31, 10);
+        12: Test(num_cycle, 30, 2);
+        13: Test(num_cycle, 31, 15);
+        17: Test(num_cycle, 30, 1);
+        18: Test(num_cycle, 31, 17);
+        22: Test(num_cycle, 30, 0);
+        23: Test(num_cycle, 31, 18);
+        26: Test(num_cycle, 33, 18);
+        28: Test(num_cycle, 34, 12);
+        38: Test(num_cycle, 30, 24);
+        39: Test(num_cycle, 31, 3);
+        40: Test(num_cycle, 32, 12);
         41: Test(num_cycle, 33, 259);
      endcase
   end
-endmodule 
+endmodule

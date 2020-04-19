@@ -1,97 +1,302 @@
 `include "opcodes.v"
+`timescale 1ns/100ps
 
 module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
-    output reg readM;
-    output writeM;
-    output reg [`WORD_SIZE-1:0] address;
-    inout wire [`WORD_SIZE-1:0] data;
-    input ackOutput;
-    input inputReady;
-    input reset_n;                                 
-    input clk;                                      
-                                                                                                                                                      
-    reg [`WORD_SIZE - 1:0] PC;
-    wire [`WORD_SIZE - 1:0] nextPC;
-    
+	output readM;
+	output writeM;
+	output [`WORD_SIZE-1:0] address;
+	inout [`WORD_SIZE-1:0] data;
+	input ackOutput;
+	input inputReady;
+	input reset_n;
+	input clk;
 
-    
+	// CPU output
+	reg readM;
+	reg writeM;
+	reg [`WORD_SIZE -1:0] address;
 
-    control_unit control_unit1 (ins, signal);
+    	reg [`WORD_SIZE - 1:0] pc;
 
-    //inputs for datapath
-    wire DI_readM;
-    wire DI_writeM; assign writeM = DI_writeM;
-    wire [`WORD_SIZE-1:0] DI_address;
-    reg [`WORD_SIZE-1:0] inputData;
-    wire [`WORD_SIZE-1:0] outputData;
+	// instruction sub parts
+	reg [3:0] opcode;
+	reg [1:0] rs;
+	reg [1:0] rt;
+	reg [1:0] rd;
+	reg [5:0] func;
+	reg [7:0] imm;
+	reg [11:0] target_address;
 
-    reg first;
+	reg [`WORD_SIZE - 1:0] extended_imm;
+	reg [`WORD_SIZE - 1:0] extended_target;
 
-    data_path DP (
-        DI_readM, 
-        DI_writeM, 
-        DI_address, 
-        inputData, 
-        outputData,
-        ackOutput, 
-        inputReady, 
-        instruction, 
-        signal, 
-        clk,
-        PC,
-        nextPC, 
-        reset_n
-    );
+	reg [`WORD_SIZE - 1:0] registers[3:0];
+	reg write_data;
 
-    assign data = (!clk) ? outputData : `WORD_SIZE'bz;
+	integer i;
+	initial begin
+		address = 16'h0000;
+		pc = 16'h0000;
+		for (i = 0; i< 4; i = i + 1) begin
+			registers[i] = 16'h0000;
+		end
+		write_data = 0;
+	end
 
+	assign data = write_data ? registers[rt] : `WORD_SIZE'bz;
 
-    initial
-    begin
-        PC = 0;
-        address = 0;
-        readM = 1;
-        first = 1;
-    end
+	/*
+	wire [2:0] ALUOp;
+	wire Regst, Jump, Branch, MemRead, MemtoReg, MemWrite, ALUSrc, RegWrite;
+	control_unit control_unit1(opcode, func, RegDst, Jump, Branch, MemRead, MemtoReg, ALUOp, MemWrite, ALUSrc, RegWrite);
+	*/
 
-    always @(*) begin
-        if(!reset_n) address = 0;
-        else if(clk) address = PC;
-        else address = DI_address;
-    end
+	//reg [2:0] ALUOp;
+	reg [`WORD_SIZE - 1:0] data_1, data_2;
+	wire [`WORD_SIZE - 1:0] data_1_wire, data_2_wire;
+	assign data_1_wire = data_1;
+	assign data_2_wire = data_2;
 
-    always @ (posedge clk)
-    begin
-        if(!reset_n)
-        begin
-            first <= 1;
-            PC <= -1;
-            readM <= 1; 
-        end
-        else
-        begin
-            PC <= nextPC;
-            readM <= 1;
-        end
-    end
+	wire [`WORD_SIZE - 1:0] ALU_result;
+	alu ALU(func, data_1_wire, data_2_wire, ALU_result);
 
-    always @ (DI_readM)
-    begin
-        if(clk == 0) readM <= 1;
-    end
+	integer state; //state Identifier
 
-    always @ (posedge inputReady)
-    begin
-        if(first)
-        begin
-            instruction = data;
-            first = 0;
-        end
-        else begin
-            if(clk > 0) instruction <= data;
-            else if(clk == 0) inputData <= data;
-            readM <= 0;
-        end 
-    end
-    
+	always @(inputReady) begin
+	if(inputReady == 1 && state == 0)
+		state = 1; //instruction fetch
+	if(inputReady == 0 && state == 1)
+		state = 2; //instruction execute
+	if(inputReady == 1 && state == 2)
+		state = 4; //read memory
+	if(inputReady == 0 && state == 4)
+		state = 3; //empty state(final state)
+	end
+
+	always @(ackOutput) 
+	begin
+		if(ackOutput == 1)
+			state = 5; //write memory
+		if(ackOutput == 0)
+			state = 3; //empty state(final state)
+	end
+
+	reg [`WORD_SIZE - 1:0] extended_temp;
+
+	always @(state) 
+	begin
+		if(state == 1) 
+		begin // I stage
+			readM = 0;
+			pc = pc + 1;
+
+			opcode = data[15:12];
+			rs = data[11:10];
+			rt = data[9:8];
+			rd = data[7:6];
+			func = data[5:0];
+			imm = data[7:0];
+			target_address = data[11:0];
+
+        		extended_imm = 16'h0000;
+        		extended_target = 16'h0000;
+
+			extended_temp = 16'h0000;
+
+			data_1 = registers[rs];
+			data_2 = registers[rt];
+	    	end
+
+		if(state == 2) 
+		begin
+			if(opcode == `ALU_OP) 
+			begin // R-type
+				data_1 = registers[rs];
+				data_2 = registers[rt];
+
+				$display("data1 %h data2 %h register1 %h register2 %h", data_1, data_2, registers[rs], registers[rt]);
+
+				case(func)
+				`INST_FUNC_ADD : 
+					begin
+						$display("%h + %h = %h", data_1, data_2, ALU_result);
+						registers[rd] = ALU_result;
+					end
+
+				`INST_FUNC_SUB : 
+					begin
+						$display("%h - %h = %h", data_1, data_2, ALU_result);
+						registers[rd] = ALU_result;
+					end
+
+				`INST_FUNC_AND : 
+					begin
+						$display("%h & %h = %h", data_1, data_2, ALU_result);
+						registers[rd] = ALU_result;
+					end
+
+				`INST_FUNC_ORR : 
+					begin
+						$display("%h | %h = %h", data_1, data_2, ALU_result);
+						registers[rd] = ALU_result;
+					end
+
+				`INST_FUNC_NOT : 
+					begin
+						$display("%h * - 1 = %h", data_1, ALU_result);
+						registers[rd] = ALU_result;
+					end
+				
+				`INST_FUNC_TCP : 
+					begin
+                        $display("~%h + 1 = %h", data_1, ALU_result);
+						registers[rd] = ALU_result;
+					end
+
+				`INST_FUNC_SHL : 
+					begin
+						registers[rd] = ALU_result;
+					end
+
+				`INST_FUNC_SHR : 
+					begin
+						registers[rd] = ALU_result;
+						if(data_1[15] == 1)
+							registers[rd] = registers[rd] + 16'h8000;
+					end
+
+				`INST_FUNC_JPR : 
+					begin
+						pc = data_1;
+					end
+
+				`INST_FUNC_JRL : 
+					begin
+						registers[2] = pc;
+						pc = data_1;
+					end
+				endcase
+			end
+
+        		else 
+			begin
+				extended_imm = (extended_imm | imm) << 8;
+				for(i = 0; i < 8; i = i + 1) begin
+					if(extended_imm[15] == 1)
+						extended_imm = (extended_imm >> 1) + 16'h8000;
+            		else
+                		extended_imm = extended_imm >> 1;
+				end
+
+				extended_target = (extended_target | target_address) << 8;
+				for(i = 0; i < 8; i = i + 1) begin
+					if(extended_target[15] == 1)
+			    		extended_target = (extended_target >> 1) + 16'h8000;
+            		else
+                		extended_target = extended_target >> 1;
+				end
+				case(opcode) // I, J-type
+				`ADI_OP	: 
+					begin
+						$display("ADI operation");
+						registers[rt] = (registers[rs] + extended_imm);
+					end
+
+				`ORI_OP	: 
+					begin
+						$display("ORI operation");
+						extended_temp = (extended_temp | imm);
+						registers[rt] = registers[rs] | extended_temp;
+					end
+
+				`LHI_OP	: 
+					begin
+						$display("LHI operation");
+						extended_temp = (extended_temp | imm);
+						registers[rt] = (extended_temp << 8);
+					end
+	
+				`LWD_OP	:
+					begin
+						$display("LWD operation");
+						address = (registers[rs] + extended_imm);
+						readM = 1;
+					end
+	
+				`SWD_OP	:
+					begin
+						$display("SWD operation");
+						address = (registers[rs] + extended_imm);
+						write_data = 1;
+						writeM = 1;
+					end
+	
+				`BNE_OP	:
+					begin
+						$display("BNE operation");
+						if(registers[rs] != registers[rt]) begin
+							pc = (pc + extended_imm);
+						end
+					end
+	
+				`BEQ_OP	:
+					begin
+						$display("BEQ operation");
+						if(registers[rs] == registers[rt]) begin
+							pc = (pc + extended_imm);
+						end
+					end
+	
+				`BGZ_OP	:
+					begin
+						$display("BGZ operation");
+						if((registers[rs][`WORD_SIZE - 1] == 0) && (registers[rs] != 0)) begin
+							pc = (pc + extended_imm);
+				 		end
+					end
+	
+				`BLZ_OP	:
+					begin
+						$display("BLZ operation");
+						if((registers[rs][`WORD_SIZE - 1] == 1) && (registers[rs] != 0)) begin
+							pc = (pc + extended_imm);
+				    		end
+					end
+	
+				`JMP_OP	: 
+					begin
+						pc = (pc & 16'hf000);
+						pc = (pc | extended_target);
+					end
+	
+				`JAL_OP :
+					begin
+						registers[2] = pc;
+						pc = (pc & 16'hf000);
+						pc = (pc | extended_imm);
+					end
+				endcase	
+			end
+
+			state = 3;
+		end
+
+		if(state == 4) 
+		begin
+			readM = 0;
+			registers[rt] = data;
+		end
+
+		if(state == 5) 
+		begin
+			writeM = 0;
+			write_data = 0;
+		end
+	end
+
+	always @(posedge clk) begin
+		state = 0;
+		address = pc;
+		readM = 1;
+	end
 endmodule

@@ -93,28 +93,22 @@ module control_unit (
         `ADI_OP : begin // I-type ADI (ADD Imm)
             ALUOp = 4'b0001;
             RegWrite = 1;
-            ALUSrc = 1;
         end
         `ORI_OP : begin // I-type ORI (OR Imm)
             ALUOp = 4'b0100;
             RegWrite = 1;
-            ALUSrc = 1;
         end
         `LHI_OP : begin // I-type LHI (Shift Left Imm)
             RegWrite = 1;
-            ALUSrc = 1;
         end
         `LWD_OP : begin // I-type LWD (Load)
             ALUOp = `FUNC_ADD;
-            MemRead = 1;
-            ALUSrc = 1;
             MemtoReg = 1;
             RegWrite = 1;
         end
         `SWD_OP : begin // I-type SWD (Store)
             ALUOp = `FUNC_ADD;
             MemWrite = 1;
-            ALUSrc = 1;
         end
 
         `BNE_OP : begin // I-type BNE
@@ -126,11 +120,11 @@ module control_unit (
             Branch = 1;
         end
         `BGZ_OP : begin // I-type BGZ
-            ALUOp = `FUNC_ADD;
+            ALUOp = `FUNC_SUB;
             Branch = 1;
         end
         `BLZ_OP : begin // I-type BLZ
-            ALUOp = `FUNC_ADD;
+            ALUOp = `FUNC_SUB;
             Branch = 1;
         end
 
