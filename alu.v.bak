@@ -14,7 +14,7 @@ module alu(
 
 	output [`WORD_SIZE - 1:0] ALU_result;
 
-	reg [`WORD_SIZE - 1:0] ALU_result;
+	//reg [`WORD_SIZE - 1:0] ALU_result;
 
 	initial begin
 		ALU_result = 0;
@@ -23,7 +23,7 @@ module alu(
 	always @(*) begin
 		case(func)
 			`FUNC_ADD: begin
-				ALU_result <= data_1 + data_2;
+				assign ALU_result = data_1 + data_2;
 			end
 
 			`FUNC_SUB: begin 

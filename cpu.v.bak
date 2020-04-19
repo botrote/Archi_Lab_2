@@ -126,35 +126,41 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 				`INST_FUNC_ADD : 
 					begin
 						ALUOp = `FUNC_ADD;
+						$display("%h + %h = %h", data_1, data_2, ALU_result);
 						registers[rd] = ALU_result;
 					end
 
 				`INST_FUNC_SUB : 
 					begin
 						ALUOp = `FUNC_SUB;
+						$display("%h - %h = %h", data_1, data_2, ALU_result);
 						registers[rd] = ALU_result;
 					end
 
 				`INST_FUNC_AND : 
 					begin
 						ALUOp = `FUNC_AND;
+						$display("%h & %h = %h", data_1, data_2, ALU_result);
 						registers[rd] = ALU_result;
 					end
 
 				`INST_FUNC_ORR : 
 					begin
 						ALUOp = `FUNC_ORR;
+						$display("%h | %h = %h", data_1, data_2, ALU_result);
 						registers[rd] = ALU_result;
 					end
 
 				`INST_FUNC_NOT : 
 					begin
 						ALUOp = `FUNC_NOT;
-					registers[rd] = ALU_result;
+						$display("%h * - 1 = %h", data_1, ALU_result);
+						registers[rd] = ALU_result;
 					end
 				
 				`INST_FUNC_TCP : 
 					begin
+                        $display("~%h + 1 = %h", data_1, ALU_result);
 						ALUOp = `FUNC_TCP;
 						registers[rd] = ALU_result;
 					end

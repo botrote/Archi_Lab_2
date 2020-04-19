@@ -127,7 +127,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 					begin
 						ALUOp = `FUNC_ADD;
 						$display("%h + %h = %h", data_1, data_2, ALU_result);
-						registers[rd] = ALU_result;
+						registers[rd] = data_1 + data_2; //ALU_result;
 					end
 
 				`INST_FUNC_SUB : 
