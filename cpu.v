@@ -160,6 +160,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 				
 				`INST_FUNC_TCP : 
 					begin
+                        $display("~%h + 1 = %h", data_1, ALU_result);
 						ALUOp = `FUNC_TCP;
 						registers[rd] = ALU_result;
 					end
