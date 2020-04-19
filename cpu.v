@@ -166,14 +166,14 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	
 				`LWD_OP	:
 					begin
-						$display("LWD operation");
+						//$display("LWD operation");
 						address = (registers[rs] + extended_imm1);
 						readM = 1;
 					end
 	
 				`SWD_OP	:
 					begin
-						$display("SWD operation");
+						//$display("SWD operation");
 						address = (registers[rs] + extended_imm1);
 						readOrWrite = 1;
 						writeM = 1;
@@ -181,7 +181,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	
 				`BNE_OP	:
 					begin
-						$display("BNE operation");
+						//$display("BNE operation");
 						if(registers[rs] != registers[rt]) begin
 							pc = (pc + extended_imm1);
 						end
@@ -189,7 +189,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	
 				`BEQ_OP	:
 					begin
-						$display("BEQ operation");
+						//$display("BEQ operation");
 						if(registers[rs] == registers[rt]) begin
 							pc = (pc + extended_imm1);
 						end
@@ -197,7 +197,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	
 				`BGZ_OP	:
 					begin
-						$display("BGZ operation");
+						//$display("BGZ operation");
 						if((registers[rs][`WORD_SIZE - 1] == 0) && (registers[rs] != 0)) begin
 							pc = (pc + extended_imm1);
 				 		end
@@ -205,7 +205,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	
 				`BLZ_OP	:
 					begin
-						$display("BLZ operation");
+						//$display("BLZ operation");
 						if((registers[rs][`WORD_SIZE - 1] == 1) && (registers[rs] != 0)) begin
 							pc = (pc + extended_imm1);
 				    		end
@@ -224,7 +224,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 						pc = (pc | extended_imm1);
 					end
 
-				`JRP_OP :
+				`JPR_OP :
 					begin
 					end
 
