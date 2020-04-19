@@ -11,12 +11,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	input reset_n;
 	input clk;
 
-	// CPU output
-	reg readM;
-	reg writeM;
-	reg [`WORD_SIZE -1:0] address;
-
-    	reg [`WORD_SIZE - 1:0] pc;
+    reg [`WORD_SIZE - 1:0] pc;
 
 	// instruction sub parts
 	reg [3:0] opcode;
@@ -27,44 +22,53 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	reg [7:0] imm;
 	reg [11:0] target_address;
 
+
+	//sign_extend / immediate generator
 	wire [7:0] imm_wire;
 	wire [11:0] target_address_wire;
-
 	assign imm_wire = imm;
 	assign target_address_wire = target_address;
-
 	wire [`WORD_SIZE - 1:0] extended_target, extended_imm1, extended_imm2; 
 	immediate_generator immGen(imm_wire, target_address_wire, extended_target, extended_imm1, extended_imm2);
 
+
+	//ALU
+	//reg [2:0] ALUOp;
+	reg [`WORD_SIZE - 1:0] data_1, data_2;
+	wire [`WORD_SIZE - 1:0] data_1_wire, data_2_wire;
+	assign data_1_wire = data_1;
+	assign data_2_wire = data_2;
+	wire [`WORD_SIZE - 1:0] ALU_result;
+	alu ALU(func, data_1_wire, data_2_wire, ALU_result);
+
+
 	reg [`WORD_SIZE - 1:0] registers[3:0];
-	reg write_data;
+	
+	reg readOrWrite;
+
+	// CPU output
+	reg readM;
+	reg writeM;
+	reg [`WORD_SIZE -1:0] address;
+	assign data = readOrWrite ? registers[rt] : `WORD_SIZE'bz;
+
 
 	integer i;
 	initial begin
-		address = 16'h0000;
 		pc = 16'h0000;
 		for (i = 0; i< 4; i = i + 1) begin
 			registers[i] = 16'h0000;
 		end
-		write_data = 0;
+		readOrWrite = 0;
+		address = 16'h0000;
 	end
 
-	assign data = write_data ? registers[rt] : `WORD_SIZE'bz;
 
 	/*
 	wire [2:0] ALUOp;
 	wire Regst, Jump, Branch, MemRead, MemtoReg, MemWrite, ALUSrc, RegWrite;
 	control_unit control_unit1(opcode, func, RegDst, Jump, Branch, MemRead, MemtoReg, ALUOp, MemWrite, ALUSrc, RegWrite);
 	*/
-
-	//reg [2:0] ALUOp;
-	reg [`WORD_SIZE - 1:0] data_1, data_2;
-	wire [`WORD_SIZE - 1:0] data_1_wire, data_2_wire;
-	assign data_1_wire = data_1;
-	assign data_2_wire = data_2;
-
-	wire [`WORD_SIZE - 1:0] ALU_result;
-	alu ALU(func, data_1_wire, data_2_wire, ALU_result);
 
 	integer state; //state Identifier
 
@@ -92,8 +96,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	always @(state) 
 	begin
 		if(state == 1) 
-		begin // I stage
-			readM = 0;
+		begin // I(F/D) stage
 			pc = pc + 1;
 
 			opcode = data[15:12];
@@ -103,6 +106,8 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 			func = data[5:0];
 			imm = data[7:0];
 			target_address = data[11:0];
+
+			readM = 0;
 
 			data_1 = registers[rs];
 			data_2 = registers[rt];
@@ -117,66 +122,25 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 
 				//$display("data1 %h data2 %h register1 %h register2 %h", data_1, data_2, registers[rs], registers[rt]);
 
-				case(func)
-				`INST_FUNC_ADD : 
-					begin
-						//$display("%h + %h = %h", data_1, data_2, ALU_result);
-						registers[rd] = ALU_result;
-					end
+				if(func == `INST_FUNC_ADD || func == `INST_FUNC_SUB || func == `INST_FUNC_AND || func == `INST_FUNC_ORR || func == `INST_FUNC_NOT || func == `INST_FUNC_TCP || func == `INST_FUNC_SHL)
+					registers[rd] = ALU_result;
 
-				`INST_FUNC_SUB : 
-					begin
-						//$display("%h - %h = %h", data_1, data_2, ALU_result);
-						registers[rd] = ALU_result;
-					end
-
-				`INST_FUNC_AND : 
-					begin
-						//$display("%h & %h = %h", data_1, data_2, ALU_result);
-						registers[rd] = ALU_result;
-					end
-
-				`INST_FUNC_ORR : 
-					begin
-						//$display("%h | %h = %h", data_1, data_2, ALU_result);
-						registers[rd] = ALU_result;
-					end
-
-				`INST_FUNC_NOT : 
-					begin
-						//$display("%h * - 1 = %h", data_1, ALU_result);
-						registers[rd] = ALU_result;
-					end
-				
-				`INST_FUNC_TCP : 
-					begin
-                        //$display("~%h + 1 = %h", data_1, ALU_result);
-						registers[rd] = ALU_result;
-					end
-
-				`INST_FUNC_SHL : 
-					begin
-						registers[rd] = ALU_result;
-					end
-
-				`INST_FUNC_SHR : 
+				else if(func == `INST_FUNC_SHR)
 					begin
 						registers[rd] = ALU_result;
 						if(data_1[15] == 1)
 							registers[rd] = registers[rd] + 16'h8000;
 					end
 
-				`INST_FUNC_JPR : 
+				else if(func == `INST_FUNC_JPR)
 					begin
 						pc = data_1;
 					end
-
-				`INST_FUNC_JRL : 
+				else
 					begin
 						registers[2] = pc;
 						pc = data_1;
 					end
-				endcase
 			end
 
         		else 
@@ -194,7 +158,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 						registers[rt] = registers[rs] | extended_imm2;
 					end
 
-				`LHI_OP	: 
+				`LHI_OP	: //(Left Shift Immediate)
 					begin
 						//$display("LHI operation");
 						registers[rt] = (extended_imm2 << 8);
@@ -211,7 +175,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 					begin
 						$display("SWD operation");
 						address = (registers[rs] + extended_imm1);
-						write_data = 1;
+						readOrWrite = 1;
 						writeM = 1;
 					end
 	
@@ -259,6 +223,14 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 						pc = (pc & 16'hf000);
 						pc = (pc | extended_imm1);
 					end
+
+				`JRP_OP :
+					begin
+					end
+
+				`JRL_OP :
+					begin
+					end
 				endcase	
 			end
 
@@ -274,7 +246,7 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 		if(state == 5) 
 		begin
 			writeM = 0;
-			write_data = 0;
+			readOrWrite = 0;
 		end
 	end
 
