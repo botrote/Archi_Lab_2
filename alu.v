@@ -8,7 +8,7 @@ module alu(
 	ALU_result
 );
 
-	input [2:0] func;
+	input [5:0] func;
 	input [`WORD_SIZE - 1:0] data_1;
 	input [`WORD_SIZE - 1:0] data_2;
 
@@ -22,35 +22,35 @@ module alu(
 
 	always @(*) begin
 		case(func)
-			`FUNC_ADD: begin
+			`INST_FUNC_ADD: begin
 				ALU_result <= data_1 + data_2;
 			end
 
-			`FUNC_SUB: begin 
+			`INST_FUNC_SUB: begin 
 				ALU_result <= data_1 - data_2; 
 			end
 			
-			`FUNC_NOT: begin 
+			`INST_FUNC_NOT: begin 
 				ALU_result <= ~data_1; 
 			end
 			
-			`FUNC_AND: begin 
+			`INST_FUNC_AND: begin 
 				ALU_result <= data_1 & data_2; 
 			end
 
-			`FUNC_ORR: begin 
+			`INST_FUNC_ORR: begin 
 				ALU_result <= data_1 | data_2; 
 			end
 			
-			`FUNC_TCP: begin 
+			`INST_FUNC_TCP: begin 
 				ALU_result <= ~(data_1) + 1; 
 			end
 			
-			`FUNC_SHL: begin 
+			`INST_FUNC_SHL: begin 
 				ALU_result <= data_1 << 1; 
 			end
 			
-			`FUNC_SHR: begin 
+			`INST_FUNC_SHR: begin 
 				ALU_result <= data_1 >> 1; 
 			end
 		endcase

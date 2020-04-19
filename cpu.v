@@ -51,16 +51,10 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	control_unit control_unit1(opcode, func, RegDst, Jump, Branch, MemRead, MemtoReg, ALUOp, MemWrite, ALUSrc, RegWrite);
 	*/
 
-	wire [2:0] ALUOp;
-	reg [2:0] ALUOp_reg;
-	assign ALUOp = ALUOp_reg;
-
-	wire [`WORD_SIZE - 1:0] data_1, data_2;
+	//reg [2:0] ALUOp;
+	reg [`WORD_SIZE - 1:0] data_1, data_2;
 	wire [`WORD_SIZE - 1:0] ALU_result;
-	alu ALU(ALUOp, data_1, data_2, ALU_result);
-
-	assign data_1 = registers[rs];
-	assign data_2 = registers[rt];
+	alu ALU(func, data_1, data_2, ALU_result);
 
 	integer state; //state Identifier
 
@@ -110,41 +104,36 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 		begin
 			if(opcode == `ALU_OP) 
 			begin // R-type
-				//data_1 = registers[rs];
-				//data_2 = registers[rt];
+				data_1 = registers[rs];
+				data_2 = registers[rt];
 
 				case(func)
 				`INST_FUNC_ADD : 
 					begin
-						ALUOp_reg = `FUNC_ADD;
 						$display("%h + %h = %h", data_1, data_2, ALU_result);
 						registers[rd] = ALU_result;
 					end
 
 				`INST_FUNC_SUB : 
 					begin
-						ALUOp = `FUNC_SUB;
 						$display("%h - %h = %h", data_1, data_2, ALU_result);
 						registers[rd] = ALU_result;
 					end
 
 				`INST_FUNC_AND : 
 					begin
-						ALUOp = `FUNC_AND;
 						$display("%h & %h = %h", data_1, data_2, ALU_result);
 						registers[rd] = ALU_result;
 					end
 
 				`INST_FUNC_ORR : 
 					begin
-						ALUOp = `FUNC_ORR;
 						$display("%h | %h = %h", data_1, data_2, ALU_result);
 						registers[rd] = ALU_result;
 					end
 
 				`INST_FUNC_NOT : 
 					begin
-						ALUOp = `FUNC_NOT;
 						$display("%h * - 1 = %h", data_1, ALU_result);
 						registers[rd] = ALU_result;
 					end
@@ -152,19 +141,16 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 				`INST_FUNC_TCP : 
 					begin
                         $display("~%h + 1 = %h", data_1, ALU_result);
-						ALUOp = `FUNC_TCP;
 						registers[rd] = ALU_result;
 					end
 
 				`INST_FUNC_SHL : 
 					begin
-						ALUOp = `FUNC_SHL;
 						registers[rd] = ALU_result;
 					end
 
 				`INST_FUNC_SHR : 
 					begin
-						ALUOp = `FUNC_SHR;
 						registers[rd] = ALU_result;
 						if(data_1[15] == 1)
 							registers[rd] = registers[rd] + 16'h8000;
