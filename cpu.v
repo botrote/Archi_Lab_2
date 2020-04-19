@@ -107,6 +107,8 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 				data_1 = registers[rs];
 				data_2 = registers[rt];
 
+				$display("data1 %h data2 %h register1 %h register2 %h", data_1, data_2, registers[rs], registers[rt]);
+
 				case(func)
 				`INST_FUNC_ADD : 
 					begin

@@ -23,35 +23,35 @@ module alu(
 	always @(*) begin
 		case(func)
 			`INST_FUNC_ADD: begin
-				ALU_result <= data_1 + data_2;
+				ALU_result = data_1 + data_2;
 			end
 
 			`INST_FUNC_SUB: begin 
-				ALU_result <= data_1 - data_2; 
+				ALU_result = data_1 - data_2; 
 			end
 			
 			`INST_FUNC_NOT: begin 
-				ALU_result <= ~data_1; 
+				ALU_result = ~data_1; 
 			end
 			
 			`INST_FUNC_AND: begin 
-				ALU_result <= data_1 & data_2; 
+				ALU_result = data_1 & data_2; 
 			end
 
 			`INST_FUNC_ORR: begin 
-				ALU_result <= data_1 | data_2; 
+				ALU_result = data_1 | data_2; 
 			end
 			
 			`INST_FUNC_TCP: begin 
-				ALU_result <= ~(data_1) + 1; 
+				ALU_result = ~(data_1) + 1; 
 			end
 			
 			`INST_FUNC_SHL: begin 
-				ALU_result <= data_1 << 1; 
+				ALU_result = data_1 << 1; 
 			end
 			
 			`INST_FUNC_SHR: begin 
-				ALU_result <= data_1 >> 1; 
+				ALU_result = data_1 >> 1; 
 			end
 		endcase
 
