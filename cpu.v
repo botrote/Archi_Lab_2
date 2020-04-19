@@ -19,22 +19,13 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
     	reg [`WORD_SIZE - 1:0] pc;
 
 	// instruction sub parts
-	wire [3:0] opcode;
-	wire [1:0] rs;
-	wire [1:0] rt;
-	wire [1:0] rd;
-	wire [5:0] func;
-	wire [7:0] imm;
-	wire [11:0] target_address;
-
-	assign opcode = data[15:12];
-	assign rs = data[11:10];
-	assign rt = data[9:8];
-	assign rd = data[7:6];
-	assign func = data[5:0];
-	assign imm = data[7:0];
-	assign target_address = data[11:0];
-
+	reg [3:0] opcode;
+	reg [1:0] rs;
+	reg [1:0] rt;
+	reg [1:0] rd;
+	reg [5:0] func;
+	reg [7:0] imm;
+	reg [11:0] target_address;
 
 	reg [`WORD_SIZE - 1:0] extended_imm;
 	reg [`WORD_SIZE - 1:0] extended_target;
@@ -60,10 +51,16 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 	control_unit control_unit1(opcode, func, RegDst, Jump, Branch, MemRead, MemtoReg, ALUOp, MemWrite, ALUSrc, RegWrite);
 	*/
 
-	reg [2:0] ALUOp;
-	reg [`WORD_SIZE - 1:0] data_1, data_2;
+	wire [2:0] ALUOp;
+	reg [2:0] ALUOp_reg;
+	assign ALUOp = ALUOp_reg;
+
+	wire [`WORD_SIZE - 1:0] data_1, data_2;
 	wire [`WORD_SIZE - 1:0] ALU_result;
 	alu ALU(ALUOp, data_1, data_2, ALU_result);
+
+	assign data_1 = registers[rs];
+	assign data_2 = registers[rt];
 
 	integer state; //state Identifier
 
@@ -95,6 +92,14 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 			readM = 0;
 			pc = pc + 1;
 
+			opcode = data[15:12];
+			rs = data[11:10];
+			rt = data[9:8];
+			rd = data[7:6];
+			func = data[5:0];
+			imm = data[7:0];
+			target_address = data[11:0];
+
         		extended_imm = 16'h0000;
         		extended_target = 16'h0000;
 
@@ -121,15 +126,15 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 
 			if(opcode == `ALU_OP) 
 			begin // R-type
-				data_1 = registers[rs];
-				data_2 = registers[rt];
+				//data_1 = registers[rs];
+				//data_2 = registers[rt];
 
 				case(func)
 				`INST_FUNC_ADD : 
 					begin
-						ALUOp = `FUNC_ADD;
+						ALUOp_reg = `FUNC_ADD;
 						$display("%h + %h = %h", data_1, data_2, ALU_result);
-						registers[rd] = data_1 + data_2; //ALU_result;
+						registers[rd] = ALU_result;
 					end
 
 				`INST_FUNC_SUB : 
