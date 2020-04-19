@@ -69,7 +69,8 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 		state = 3; //empty state(final state)
 	end
 
-	always @(ackOutput) begin
+	always @(ackOutput) 
+	begin
 		if(ackOutput == 1)
 			state = 5; //write memory
 		if(ackOutput == 0)
@@ -181,7 +182,6 @@ module cpu (readM, writeM, address, data, ackOutput, inputReady, reset_n, clk);
 						pc = data_1;
 					end
 				endcase
-			end
 
         		else 
 			begin
